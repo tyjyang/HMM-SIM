@@ -18,26 +18,21 @@ from DataFormats.FWLite import Handle, Events
 ## das query. do voms_proxy_init -voms cms
 from subprocess import check_output
 import re
-#cmd="das_client.py --limit=1000 --query='file dataset=/ChargedHiggs_HplusTB_HplusToTauNu_M-200_13TeV_amcatnlo_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'"
-#output = check_output(cmd,shell=True)
-#files = [ x for x in output.split('\n') if '/store' in x ] 
 
-#madspin="madspin"
-madspin="nomadspin"
-indir="/store/group/phys_higgs/cmshtt/amarini/ChargedHToTauNu_M500_amcatnlo_"+madspin+"_13TeV_pythia8/GEN"
-cmd="eos find -f "+ indir
-output=check_output(cmd,shell=True)
-#files = [ "root://eoscms/"+re.sub('/eos/cms','',x) for x in output.split('\n') if '/store' in x ] 
-#blacklist=["/eos/cms/store/group/phys_higgs/cmshtt/amarini/ChargedHToTauNu_M500_amcatnlo_madspin_13TeV_pythia8/GEN/180821_121144/0000/step1_10.root"]
+# setup eos redirector
+eos_redirector = "root://eoscms.cern.ch/"
+
+# get a list of files under a certain directory
+LFN = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
+list_of_files = check_output("eos " + eos_redirector + " find -f " + LFN, shell=True)
 blacklist=[]
-files = [ "file:"+x for x in output.split('\n') if '/store' in x and x not in blacklist] 
-files = ["file:/afs/cern.ch/user/a/amarini/public/forMiao/step5.root"]
-onMiniAOD=False
+files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
 
+# set up a few parameters
+onMiniAOD=False
 #onlyEvent=12345
 onlyEvent=None
 verbose=True
-
 h={}
 
 #h["mt"] = ROOT.TH1D("mt","mt",1500,500,1500)
@@ -63,7 +58,7 @@ try:
         if 'file:' in f.split()[0] :
             events = Events(f.split()[0])
         else:
-            events = Events("root://eoscms//"+f.split()[0])
+            events = Events("root://eoscms.cern.ch//"+f.split()[0])
             #events = Events("root://xrootd-cms.infn.it//"+f.split()[0]) #AAA
         lhe,lheLabel = Handle("LHEEventProduct"),"externalLHEProducer"
         handlePruned  = Handle ("std::vector<reco::GenParticle>")
@@ -182,8 +177,9 @@ try:
 except KeyboardInterrupt:
     pass
 
-fOut=ROOT.TFile("ch_"+madspin+"_gen.root","RECREATE")
+fOut=ROOT.TFile("ch_"+"_gen.root","RECREATE")
 fOut.cd()
 for hstr in h:
     h[hstr].Write()
 print "DONE"
+
