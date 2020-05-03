@@ -105,7 +105,7 @@ try:
             h["all"].Fill(2,w*w)
             h["all"].Fill(3,1)
 
-            tau=ROOT.TLorentzVector()
+            mu=ROOT.TLorentzVector()
             nu=ROOT.TLorentzVector()
             met=ROOT.TLorentzVector()
             #lep=ROOT.TLorentzVector()
@@ -118,10 +118,10 @@ try:
                 if verbose:
                     print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
 
-                if p.status() ==1 and abs(p.eta())<4.7 and abs(p.pdgId()) not in [12,14,16]:
+                if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
                     tmp=ROOT.TLorentzVector()
-                    tmp.SetPtEtaPhiM( p.pt(),p.eta(),p.phi(),0.0)
-                    met-=tmp
+                    tmp.SetPtEtaPhiM( p.pt(),p.eta(),p.phi(),0.105)
+                    mu-=tmp
 
                 if p.status() ==1 and (abs(p.pdgId())==11 or abs(p.pdgId())==13 ) and abs(mpdg)==15:
                     lep=ROOT.TLorentzVector()
