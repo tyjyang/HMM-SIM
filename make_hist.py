@@ -26,7 +26,8 @@ eos_redirector = "root://eoscms.cern.ch/"
 LFN = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
 list_of_files = check_output("eos " + eos_redirector + " find -f " + LFN, shell=True)
 blacklist=[]
-files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
+#files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
+files = list_of_files.split('\n').[0]
 
 # set up a few parameters
 onMiniAOD=False
@@ -51,7 +52,7 @@ h["leadjetpt"] = ROOT.TH1D("leadjetpt","leadjetpt",1000,0,1000)
 
 ## counters events
 try:
-   for f in files[0]:
+   for f in files:
 
     # tries to fetch the file from eos
      try:
@@ -137,7 +138,7 @@ try:
 
                 if abs(p.pdgId()) == 16 and abs(mpdg)==37:
                     nu.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0)
-		'''
+'''
 
             '''
             event.getByLabel(labelJets, handleJets)
