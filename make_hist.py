@@ -120,9 +120,9 @@ try:
                 if mother: mpdg=mother.pdgId()
                 if verbose:
                     print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
-
+                '''
                 if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
-                ''' 
+                 
                 if p.status() ==1 and abs(p.eta())<4.7 and abs(p.pdgId()) not in [12,14,16]:
                     tmp=ROOT.TLorentzVector()
                     tmp.SetPtEtaPhiM( p.pt(),p.eta(),p.phi(),0.105)
@@ -137,7 +137,7 @@ try:
 
                 if abs(p.pdgId()) == 16 and abs(mpdg)==37:
                     nu.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0)
-                    ''' 
+		'''
 
             '''
             event.getByLabel(labelJets, handleJets)
