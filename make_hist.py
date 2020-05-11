@@ -27,7 +27,7 @@ LFN = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-
 list_of_files = check_output("eos " + eos_redirector + " find -f " + LFN, shell=True)
 blacklist=[]
 #files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
-files = list_of_files.split('\n').[0]
+files = list_of_files.split('\n')[0]
 
 # set up a few parameters
 onMiniAOD=False
