@@ -1,4 +1,3 @@
-##
 # import ROOT in batch mode
 import sys,os
 import math
@@ -52,14 +51,16 @@ h["leadjetpt"] = ROOT.TH1D("leadjetpt","leadjetpt",1000,0,1000)
 
 ## counters events
 try:
-   for f in files:
+   for f in files[0]:
+
+    # tries to fetch the file from eos
      try:
         # open file (you can use 'edmFileUtil -d /store/whatever.root' to get the physical file name)
         print "->Opening file",f.split()[0]
         if 'file:' in f.split()[0] :
             events = Events(f.split()[0])
         else:
-            events = Events("root://eoscms.cern.ch//"+f.split()[0])
+            events = Events(eos_redirector + f.split()[0])
             #events = Events("root://xrootd-cms.infn.it//"+f.split()[0]) #AAA
         lhe,lheLabel = Handle("LHEEventProduct"),"externalLHEProducer"
         handlePruned  = Handle ("std::vector<reco::GenParticle>")
@@ -81,7 +82,8 @@ try:
 
             if verbose:
                 print "\n-> Event %d: run %6d, lumi %4d, event %12d" % (iev,event.eventAuxiliary().run(), event.eventAuxiliary().luminosityBlock(),event.eventAuxiliary().event())
-
+            
+            # tries to extract genParticles from each event
             try:
                 event.getByLabel(lheLabel, lhe)
                 hepeup = lhe.product().hepeup()
@@ -120,6 +122,8 @@ try:
                     print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
 
                 if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
+'''             
+                if p.status() ==1 and abs(p.eta())<4.7 and abs(p.pdgId()) not in [12,14,16]:
                     tmp=ROOT.TLorentzVector()
                     tmp.SetPtEtaPhiM( p.pt(),p.eta(),p.phi(),0.105)
                     mu-=tmp
@@ -133,8 +137,9 @@ try:
 
                 if abs(p.pdgId()) == 16 and abs(mpdg)==37:
                     nu.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0)
+'''               
 
-
+'''
             event.getByLabel(labelJets, handleJets)
             njets=0
             taujet=None
@@ -169,7 +174,7 @@ try:
             h["met"] . Fill(met.Pt(),w)
             if lep: h["lep-met-dphi"] . Fill(abs(lep.DeltaPhi(met)),w)
             h["leadjetpt"] . Fill(leadjetpt,w)
-
+'''
      except TypeError:
          # eos sucks
          pass
@@ -177,10 +182,11 @@ try:
 #
 except KeyboardInterrupt:
     pass
-
+'''
 fOut=ROOT.TFile("ch_"+"_gen.root","RECREATE")
 fOut.cd()
 for hstr in h:
     h[hstr].Write()
 print "DONE"
+'''
 
