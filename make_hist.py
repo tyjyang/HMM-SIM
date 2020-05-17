@@ -102,27 +102,27 @@ try:
                         print " ------------ "
                     event.getByLabel (labelPruned, handlePruned)
                     pruned = handlePruned.product()
-                    except RuntimeError:
-                        print "-> RuntimeERROR trying to continue"
-                        continue
-                    h["all"].Fill(1,w)
-                    h["all"].Fill(2,w*w)
-                    h["all"].Fill(3,1)
+                except RuntimeError:
+                    print "-> RuntimeERROR trying to continue"
+                    continue
+                h["all"].Fill(1,w)
+                h["all"].Fill(2,w*w)
+                h["all"].Fill(3,1)
 
-                    mu=ROOT.TLorentzVector()
-                    nu=ROOT.TLorentzVector()
-                    met=ROOT.TLorentzVector()
-                    #lep=ROOT.TLorentzVector()
-                    lep=None
-                    muon_counter = 0
-                    for p in pruned:
-                        #mother=p.mother(0)
-                        #mpdg=0
-                        #if mother: mpdg=mother.pdgId()
-                        if verbose and p.pdgId() == abs(13):
+                mu=ROOT.TLorentzVector()
+                nu=ROOT.TLorentzVector()
+                met=ROOT.TLorentzVector()
+                #lep=ROOT.TLorentzVector()
+                lep=None
+                muon_counter = 0
+                for p in pruned:
+                    #mother=p.mother(0)
+                    #mpdg=0
+                    #if mother: mpdg=mother.pdgId()
+                    if verbose and p.pdgId() == abs(13):
                         #  print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
-                            muon_counter = muon_counter + 1
-                    print "counting %d muons" %(muon_counter)
+                        muon_counter = muon_counter + 1
+                print "counting %d muons" %(muon_counter)
                 '''
                 if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
                  
