@@ -52,77 +52,77 @@ h["leadjetpt"] = ROOT.TH1D("leadjetpt","leadjetpt",1000,0,1000)
 
 ## counters events
 try:
-   for f in files:
 
-    # tries to fetch the file from eos
-     try:
-        # open file (you can use 'edmFileUtil -d /store/whatever.root' to get the physical file name)
-        print "->Opening file",f.split()[0]
-        if 'file:' in f.split()[0] :
-            events = Events(f.split()[0])
-        else:
-            events = Events(eos_redirector + f.split()[0])
-            #events = Events("root://xrootd-cms.infn.it//"+f.split()[0]) #AAA
-        lhe,lheLabel = Handle("LHEEventProduct"),"externalLHEProducer"
-        handlePruned  = Handle ("std::vector<reco::GenParticle>")
-        handleJets  = Handle ("std::vector<reco::GenJet>")
+    for f in files:
+        # tries to fetch the file from eos
+        try:
+            # open file (you can use 'edmFileUtil -d /store/whatever.root' to get the physical file name)
+            print "->Opening file",f.split()[0]
+            if 'file:' in f.split()[0] :
+                events = Events(f.split()[0])
+            else:
+                events = Events(eos_redirector + f.split()[0])
+                #events = Events("root://xrootd-cms.infn.it//"+f.split()[0]) #AAA
+                lhe,lheLabel = Handle("LHEEventProduct"),"externalLHEProducer"
+                handlePruned  = Handle ("std::vector<reco::GenParticle>")
+                handleJets  = Handle ("std::vector<reco::GenJet>")
 
-        if onMiniAOD:
-            labelPruned = ("prunedGenParticles")
-            labelJets = ("slimmedGenJets")
-        else:
-            labelPruned = ("genParticles")
-            labelJets = ("ak4GenJets")
+            if onMiniAOD:
+                labelPruned = ("prunedGenParticles")
+                labelJets = ("slimmedGenJets")
+            else:
+                labelPruned = ("genParticles")
+                labelJets = ("ak4GenJets")
 
-        if events==None: 
-            print "Events is none.Try to continue"
-            continue        
-        for iev,event in enumerate(events):
+            if events==None: 
+                print "Events is none.Try to continue"
+                continue        
+            for iev,event in enumerate(events):
 
-            if onlyEvent != None and event.eventAuxiliary().event() != onlyEvent: continue
+                if onlyEvent != None and event.eventAuxiliary().event() != onlyEvent: continue
 
-            if verbose:
-                print "\n-> Event %d: run %6d, lumi %4d, event %12d" % (iev,event.eventAuxiliary().run(), event.eventAuxiliary().luminosityBlock(),event.eventAuxiliary().event())
+                if verbose:
+                    print "\n-> Event %d: run %6d, lumi %4d, event %12d" % (iev,event.eventAuxiliary().run(), event.eventAuxiliary().luminosityBlock(),event.eventAuxiliary().event())
             
-            # tries to extract genParticles from each event
-            try:
-                event.getByLabel(lheLabel, lhe)
-                hepeup = lhe.product().hepeup()
-                #if verbose:
-                #  for i in range(0,hepeup.IDUP.size() ):
-                #    x=ROOT.TLorentzVector()
-                #    x.SetPxPyPzE( hepeup.PUP[i][0],hepeup.PUP[i][1],hepeup.PUP[i][2],hepeup.PUP[i][3]) 
-                #    if hepeup.ISTUP[i] != 1: continue;
-                #    print " *) pdgid=",hepeup.IDUP[i],"pt=",x.Pt(),"eta=",x.Eta(),"phi=",x.Phi()
+                # tries to extract genParticles from each event
+                try:
+                    event.getByLabel(lheLabel, lhe)
+                    hepeup = lhe.product().hepeup()
+                    #if verbose:
+                    #  for i in range(0,hepeup.IDUP.size() ):
+                    #    x=ROOT.TLorentzVector()
+                    #    x.SetPxPyPzE( hepeup.PUP[i][0],hepeup.PUP[i][1],hepeup.PUP[i][2],hepeup.PUP[i][3]) 
+                    #    if hepeup.ISTUP[i] != 1: continue;
+                    #    print " *) pdgid=",hepeup.IDUP[i],"pt=",x.Pt(),"eta=",x.Eta(),"phi=",x.Phi()
 
-                w=lhe.product().weights()[0].wgt
+                    w=lhe.product().weights()[0].wgt
 
                 ### GEN PARTICLES
-                if verbose:
-                    print " ------------ "
-                event.getByLabel (labelPruned, handlePruned)
-                pruned = handlePruned.product()
-            except RuntimeError:
-                print "-> RuntimeERROR trying to continue"
-                continue
-            h["all"].Fill(1,w)
-            h["all"].Fill(2,w*w)
-            h["all"].Fill(3,1)
+                    if verbose:
+                        print " ------------ "
+                    event.getByLabel (labelPruned, handlePruned)
+                    pruned = handlePruned.product()
+                    except RuntimeError:
+                        print "-> RuntimeERROR trying to continue"
+                        continue
+                    h["all"].Fill(1,w)
+                    h["all"].Fill(2,w*w)
+                    h["all"].Fill(3,1)
 
-            mu=ROOT.TLorentzVector()
-            nu=ROOT.TLorentzVector()
-            met=ROOT.TLorentzVector()
-            #lep=ROOT.TLorentzVector()
-            lep=None
-            muon_counter = 0
-            for p in pruned:
-                #mother=p.mother(0)
-                #mpdg=0
-                #if mother: mpdg=mother.pdgId()
-                if verbose and p.pdgId() == abs(13):
-                  #  print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
-		            muon_counter = muon_counter + 1
-            print "counting %d muons" %(muon_counter)
+                    mu=ROOT.TLorentzVector()
+                    nu=ROOT.TLorentzVector()
+                    met=ROOT.TLorentzVector()
+                    #lep=ROOT.TLorentzVector()
+                    lep=None
+                    muon_counter = 0
+                    for p in pruned:
+                        #mother=p.mother(0)
+                        #mpdg=0
+                        #if mother: mpdg=mother.pdgId()
+                        if verbose and p.pdgId() == abs(13):
+                        #  print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
+                            muon_counter = muon_counter + 1
+                    print "counting %d muons" %(muon_counter)
                 '''
                 if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
                  
@@ -178,9 +178,9 @@ try:
             if lep: h["lep-met-dphi"] . Fill(abs(lep.DeltaPhi(met)),w)
             h["leadjetpt"] . Fill(leadjetpt,w)
             '''
-     except TypeError:
-         # eos sucks
-         pass
+        except TypeError:
+             # eos sucks
+            pass
 
 #
 except KeyboardInterrupt:
