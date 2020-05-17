@@ -122,8 +122,7 @@ try:
                 if verbose and p.pdgId() == abs(13):
                   #  print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
 		            muon_counter = muon_counter + 1
-
-	        print "counting %d muons" %(muon_counter)
+            print "counting %d muons" %(muon_counter)
                 '''
                 if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
                  
