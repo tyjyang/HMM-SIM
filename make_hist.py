@@ -21,7 +21,9 @@ import re
 
 # setup eos redirector
 eos_redirector = "root://eoscms.cern.ch/"
-
+# pdg mc particle id
+muon_id = 13
+higgs_id = 25
 # get a list of files under a certain directory
 LFN = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
 list_of_files = check_output("eos " + eos_redirector + " find -f " + LFN, shell=True)
@@ -116,13 +118,14 @@ try:
                 lep=None
                 muon_counter = 0
                 for p in pruned:
-                    #mother=p.mother(0)
-                    #mpdg=0
-                    #if mother: mpdg=mother.pdgId()
-                    if verbose and p.pdgId() == abs(13):
-                        #  print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
-                        muon_counter = muon_counter + 1
-                print "counting %d muons" %(muon_counter)
+                    mother=p.mother(0)
+                    mpdg=0
+                    if mother: mpdg=mother.pdgId()
+                    if verbose 
+                        print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
+                    if abs(p.pdgId() == muon_id) and mpdg = higgs_id:
+#                if muon_counter != 2:
+#		    print "mismatch of decayed muons"
                 '''
                 if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
                  
