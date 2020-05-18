@@ -1,6 +1,7 @@
 # import ROOT in batch mode
 import sys,os
 import math
+import numpy as np
 oldargv = sys.argv[:]
 #sys.argv = [ '-b-' ]
 import ROOT
@@ -24,6 +25,8 @@ eos_redirector = "root://eoscms.cern.ch/"
 # pdg mc particle id
 muon_id = 13
 higgs_id = 25
+# particle masses in [GeV]
+muon_mass = 0.105
 # get a list of files under a certain directory
 LFN = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
 list_of_files = check_output("eos " + eos_redirector + " find -f " + LFN, shell=True)
@@ -39,18 +42,18 @@ verbose=True
 h={}
 
 #h["mt"] = ROOT.TH1D("mt","mt",1500,500,1500)
-h["all"] = ROOT.TH1D("all","mt",10,0.5,10.5)
-h["mt-had"] = ROOT.TH1D("mt-had","mt",1000,0,1000)
-h["mt-lep"] = ROOT.TH1D("mt-lep","mt",1000,0,1000)
-h["mass"] = ROOT.TH1D("mass","mass",1000,0,1000)
-h["njets"] = ROOT.TH1D("njets","njets",10,0,10)
-h["taupt"] = ROOT.TH1D("taupt","taupt",1000,0,1000)
-h["tauhpt"] = ROOT.TH1D("tauhpt","tauhpt",1000,0,1000)
-h["leppt"] = ROOT.TH1D("leppt","leppt",1000,0,1000)
-h["met"] = ROOT.TH1D("met","met",1000,0,1000)
-h["lep-met-dphi"] = ROOT.TH1D("lep-met-dphi","lep-met-dphi",1000,0,3.1416)
-h["leadjetpt"] = ROOT.TH1D("leadjetpt","leadjetpt",1000,0,1000)
-
+#h["all"] = ROOT.TH1D("all","mt",10,0.5,10.5)
+#h["mt-had"] = ROOT.TH1D("mt-had","mt",1000,0,1000)
+#h["mt-lep"] = ROOT.TH1D("mt-lep","mt",1000,0,1000)
+#h["mass"] = ROOT.TH1D("mass","mass",1000,0,1000)
+#h["njets"] = ROOT.TH1D("njets","njets",10,0,10)
+#h["taupt"] = ROOT.TH1D("taupt","taupt",1000,0,1000)
+#h["tauhpt"] = ROOT.TH1D("tauhpt","tauhpt",1000,0,1000)
+#h["leppt"] = ROOT.TH1D("leppt","leppt",1000,0,1000)
+#h["met"] = ROOT.TH1D("met","met",1000,0,1000)
+#h["lep-met-dphi"] = ROOT.TH1D("lep-met-dphi","lep-met-dphi",1000,0,3.1416)
+#h["leadjetpt"] = ROOT.TH1D("leadjetpt","leadjetpt",1000,0,1000)
+h['muon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass", 1000, 0, 100)
 
 ## counters events
 try:
@@ -116,14 +119,27 @@ try:
                 met=ROOT.TLorentzVector()
                 #lep=ROOT.TLorentzVector()
                 lep=None
-                muon_counter = 0
+
+                mu = []
+                pt = []
                 for p in pruned:
                     mother=p.mother(0)
                     mpdg=0
                     if mother: mpdg=mother.pdgId()
                     if verbose 
                         print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
-                    if abs(p.pdgId() == muon_id) and mpdg = higgs_id:
+
+                    if abs(p.pdgId()) == muon_id and mpdg == higgs_id:
+                        magnitude_of_momentum = p.pt() * math.cosh(p.eta())
+                        energy = math.sqrt(magnitude_of_momentum ** 2 + muon_mass ** 2)
+                        pz = p.pt() * math.sinh(p.eta())
+                        px = p.pt() * math.cos(p.eta())
+                        py = p.pt() * math.sin(p.eta())
+                        mu.append([energy,px,py,pz])
+                        pt,append(p.pt())
+                inv_mass = (mu[0][0] + mu[1][0])**2 - np.dot(mu[0][1:],mu[1][1:]])
+                h['muon_inv_m'].Fill(inv_mass)
+                print inv_mass
 #                if muon_counter != 2:
 #		    print "mismatch of decayed muons"
                 '''
@@ -188,11 +204,11 @@ try:
 #
 except KeyboardInterrupt:
     pass
-'''
-fOut=ROOT.TFile("ch_"+"_gen.root","RECREATE")
+
+fOut=ROOT.TFile("hist.root","RECREATE")
 fOut.cd()
 for hstr in h:
     h[hstr].Write()
 print "DONE"
-'''
+
 
