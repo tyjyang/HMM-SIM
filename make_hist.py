@@ -49,7 +49,7 @@ files = list_of_files.split('\n')[0:1]
 onMiniAOD=False
 #onlyEvent=12345
 onlyEvent=None
-verbose=True
+verbose=False
 
 ###########################
 # initializing histograms #
@@ -142,7 +142,7 @@ try:
 
 				mu = []
 				pt = []
-
+				muon_counter = 0
 				# loop over each object in genParticles
 				for p in pruned:
 
@@ -155,8 +155,9 @@ try:
 
 					# Hmm dimuon invariant mass 
 					if abs(p.pdgId()) == muon_id and mpdg == higgs_id:
-						magnitude_of_momentum = p.pt() * math.cosh(p.eta())
-						energy = math.sqrt(magnitude_of_momentum ** 2 + muon_mass ** 2)
+						muon_counter += 1
+						p_mag = p.pt() * math.cosh(p.eta())
+						energy = math.sqrt(p_mag ** 2 + muon_mass ** 2)
 						pz = p.pt() * math.sinh(p.eta())
 						px = p.pt() * math.cos(p.phi())
 						py = p.pt() * math.sin(p.phi())
@@ -181,48 +182,51 @@ try:
 					if abs(p.pdgId()) == 16 and abs(mpdg)==37:
 						nu.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0)
 					'''
-				inv_mass = (mu[0][0] + mu[1][0])**2 - np.dot(mu[0][1:],mu[1][1:])
-				h['muon_inv_m'].Fill(inv_mass)
-				h['pt1'].Fill(np.amax(pt))
-				h['pt2'].Fill(np.amin(pt))
-				print inv_mass
+				if muon_counter == 2:
+					mu = np.array(mu)
+					inv_mass = math.sqrt(np.add(mu[0][0], mu[1][0]) ** 2 - np.linalg.norm(np.add(mu[0][1:], mu[1][1:])) ** 2)
+					h['muon_inv_m'].Fill(inv_mass)
+					h['pt1'].Fill(np.amax(pt))
+					h['pt2'].Fill(np.amin(pt))
+					print inv_mass
+				else:
+					print 'wrong config in HMM decay'
 
 
 				'''
-                event.getByLabel(labelJets, handleJets)
-                njets=0
-                taujet=None
-                leadjetpt=0
-                for j in handleJets.product():
-                    if verbose:
-                        print " *) GenJet :   pt : %s  eta : %s   phi : %s " %(j.pt(),j.eta(),j.phi()) 
-                    if j.pt()<30: continue
-                    if abs(j.eta())>4.7: continue
-                    jet=ROOT.TLorentzVector()
-                    jet.SetPtEtaPhiM(j.pt(),j.eta(),j.phi(),j.mass())
-                    if lep != None and lep.DeltaR(jet)<0.1: continue ## exclude lep-jets
-                    if jet.DeltaR(tau) <0.1 :
-                        taujet=jet
-                        continue
-                    njets+=1
-                    leadjetpt=max(leadjetpt,j.pt())
+				event.getByLabel(labelJets, handleJets)
+				njets=0
+				taujet=None
+				leadjetpt=0
+				for j in handleJets.product():
+					if verbose:
+						print " *) GenJet :   pt : %s  eta : %s   phi : %s " %(j.pt(),j.eta(),j.phi()) 
+					if j.pt()<30: continue
+					if abs(j.eta())>4.7: continue
+					jet=ROOT.TLorentzVector()
+					jet.SetPtEtaPhiM(j.pt(),j.eta(),j.phi(),j.mass())
+					if lep != None and lep.DeltaR(jet)<0.1: continue ## exclude lep-jets
+					if jet.DeltaR(tau) <0.1 :
+						taujet=jet
+						continue
+					njets+=1
+					leadjetpt=max(leadjetpt,j.pt())
                 
+				#njets
+				hp=tau+nu ## true
 
-                #njets
-                hp=tau+nu ## true
+				h["mass"].Fill(hp.M())
 
-                h["mass"].Fill(hp.M())
-
-                #return TMath::Sqrt( 2.* fabs(pt1) * fabs(pt2) * fabs( 1.-TMath::Cos(ChargedHiggs::deltaPhi(phi1,phi2)) ) );
-                if taujet : h["mt-had"] . Fill(math.sqrt(2*taujet.Pt()*met.Pt()*(1.-math.cos(met.DeltaPhi(taujet)))),w)
-                if lep    : h["mt-lep"] . Fill(math.sqrt(2*lep.Pt()*met.Pt()*(1.-math.cos(met.DeltaPhi(lep)))),w)
-                h["njets"] . Fill(njets,w)
-                h["taupt"] . Fill(tau.Pt(),w)
-                if taujet : h["tauhpt"] . Fill(taujet.Pt(),w)
-                if lep    : h["leppt"] . Fill(lep.Pt(),w)
-                h["met"] . Fill(met.Pt(),w)
-                if lep: h["lep-met-dphi"] . Fill(abs(lep.DeltaPhi(met)),w)
-                h["leadjetpt"] . Fill(leadjetpt,w)
+				#return TMath::Sqrt( 2.* fabs(pt1) * fabs(pt2) * fabs( 1.-TMath::Cos(ChargedHiggs::deltaPhi(phi1,phi2)) ) );
+				if taujet : h["mt-had"] . Fill(math.sqrt(2*taujet.Pt()*met.Pt()*(1.-math.cos(met.DeltaPhi(taujet)))),w)
+				if lep    : h["mt-lep"] . Fill(math.sqrt(2*lep.Pt()*met.Pt()*(1.-math.cos(met.DeltaPhi(lep)))),w)
+				h["njets"] . Fill(njets,w)
+				h["taupt"] . Fill(tau.Pt(),w)
+				if taujet : h["tauhpt"] . Fill(taujet.Pt(),w)
+				if lep    : h["leppt"] . Fill(lep.Pt(),w)
+				h["met"] . Fill(met.Pt(),w)
+				if lep: h["lep-met-dphi"] . Fill(abs(lep.DeltaPhi(met)),w)
+				h["leadjetpt"] . Fill(leadjetpt,w)
 				'''
 		except TypeError:
 			# eos sucks
