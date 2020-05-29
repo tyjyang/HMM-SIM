@@ -38,11 +38,11 @@ files = list_of_files.split('\n')[0:1]
 onMiniAOD=False
 #onlyEvent=12345
 onlyEvent=None
-verbose=True
+verbose=False
 h={}
 
 #h["mt"] = ROOT.TH1D("mt","mt",1500,500,1500)
-#h["all"] = ROOT.TH1D("all","mt",10,0.5,10.5)
+h["all"] = ROOT.TH1D("all","mt",10,0.5,10.5)
 #h["mt-had"] = ROOT.TH1D("mt-had","mt",1000,0,1000)
 #h["mt-lep"] = ROOT.TH1D("mt-lep","mt",1000,0,1000)
 #h["mass"] = ROOT.TH1D("mass","mass",1000,0,1000)
@@ -53,8 +53,9 @@ h={}
 #h["met"] = ROOT.TH1D("met","met",1000,0,1000)
 #h["lep-met-dphi"] = ROOT.TH1D("lep-met-dphi","lep-met-dphi",1000,0,3.1416)
 #h["leadjetpt"] = ROOT.TH1D("leadjetpt","leadjetpt",1000,0,1000)
-h['muon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass", 1000, 0, 100)
-
+h['muon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass", 100, 124.5, 125.5)
+h['pt1'] = ROOT.TH1D("pt1", "Leading Muon Transverse Momentum", 200, 0, 200)
+h['pt2'] = ROOT.TH1D("pt2", "Subsequent Muon Transverse Momentum", 200, 0, 200)
 ## counters events
 try:
 
@@ -126,20 +127,27 @@ try:
                     mother=p.mother(0)
                     mpdg=0
                     if mother: mpdg=mother.pdgId()
-                    if verbose 
+                    if verbose: 
                         print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
 
                     if abs(p.pdgId()) == muon_id and mpdg == higgs_id:
                         magnitude_of_momentum = p.pt() * math.cosh(p.eta())
                         energy = math.sqrt(magnitude_of_momentum ** 2 + muon_mass ** 2)
                         pz = p.pt() * math.sinh(p.eta())
-                        px = p.pt() * math.cos(p.eta())
-                        py = p.pt() * math.sin(p.eta())
+                        px = p.pt() * math.cos(p.phi())
+                        py = p.pt() * math.sin(p.phi())
                         mu.append([energy,px,py,pz])
-                        pt,append(p.pt())
-                inv_mass = (mu[0][0] + mu[1][0])**2 - np.dot(mu[0][1:],mu[1][1:]])
+                        pt.append(p.pt())
+		di_muon = np.zeros(4)
+		for i in np.arange(4):
+		    di_muon[i] = mu[0][i] + mu[1][i]
+		inv_mass = math.sqrt(di_muon[0] ** 2 - di_muon[1] ** 2 - di_muon[2] ** 2 - di_muon[3] ** 2)
                 h['muon_inv_m'].Fill(inv_mass)
-                print inv_mass
+		h['pt1'].Fill(np.amax(pt))
+		h['pt2'].Fill(np.amin(pt))
+	#	print di_muon
+		print pt
+                print inv_mass 
 #                if muon_counter != 2:
 #		    print "mismatch of decayed muons"
                 '''
