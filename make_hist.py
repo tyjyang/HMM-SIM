@@ -185,7 +185,7 @@ try:
                 inv_mass = (mu[0][0] + mu[1][0])**2 - np.dot(mu[0][1:],mu[1][1:]])
                 h['muon_inv_m'].Fill(inv_mass)
                 h['pt1'].Fill(np.amax(pt))
-		        h['pt2'].Fill(np.amin(pt))
+		h['pt2'].Fill(np.amin(pt))
                 print inv_mass
 #                if muon_counter != 2:
 #		             print "mismatch of decayed muons"
