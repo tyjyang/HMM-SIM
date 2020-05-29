@@ -1,3 +1,7 @@
+#######################
+# importing libraries #
+#######################
+
 # import ROOT in batch mode
 import sys,os
 import math
@@ -20,13 +24,20 @@ from DataFormats.FWLite import Handle, Events
 from subprocess import check_output
 import re
 
-# setup eos redirector
+####################
+# global variables #
+####################
+
+# setup eos redirector for fetching ROOT files
 eos_redirector = "root://eoscms.cern.ch/"
+
 # pdg mc particle id
 muon_id = 13
 higgs_id = 25
+
 # particle masses in [GeV]
 muon_mass = 0.105
+
 # get a list of files under a certain directory
 LFN = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
 list_of_files = check_output("eos " + eos_redirector + " find -f " + LFN, shell=True)
@@ -38,7 +49,11 @@ files = list_of_files.split('\n')[0:1]
 onMiniAOD=False
 #onlyEvent=12345
 onlyEvent=None
-verbose=False
+verbose=True
+
+###########################
+# initializing histograms #
+###########################
 h={}
 
 #h["mt"] = ROOT.TH1D("mt","mt",1500,500,1500)
@@ -56,6 +71,10 @@ h["all"] = ROOT.TH1D("all","mt",10,0.5,10.5)
 h['muon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass", 100, 124.5, 125.5)
 h['pt1'] = ROOT.TH1D("pt1", "Leading Muon Transverse Momentum", 200, 0, 200)
 h['pt2'] = ROOT.TH1D("pt2", "Subsequent Muon Transverse Momentum", 200, 0, 200)
+h['muon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass", 1000, 0, 100)
+
+
+
 ## counters events
 try:
 
@@ -123,13 +142,18 @@ try:
 
                 mu = []
                 pt = []
+
+                # loop over each object in genParticles
                 for p in pruned:
+
+                    # getting particle info
                     mother=p.mother(0)
                     mpdg=0
                     if mother: mpdg=mother.pdgId()
                     if verbose: 
                         print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
 
+                    # Hmm dimuon invariant mass 
                     if abs(p.pdgId()) == muon_id and mpdg == higgs_id:
                         magnitude_of_momentum = p.pt() * math.cosh(p.eta())
                         energy = math.sqrt(magnitude_of_momentum ** 2 + muon_mass ** 2)
@@ -151,68 +175,78 @@ try:
 #                if muon_counter != 2:
 #		    print "mismatch of decayed muons"
                 '''
-                if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
+
+                    if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
                  
-                if p.status() ==1 and abs(p.eta())<4.7 and abs(p.pdgId()) not in [12,14,16]:
+                    if p.status() ==1 and abs(p.eta())<4.7 and abs(p.pdgId()) not in [12,14,16]:
                     tmp=ROOT.TLorentzVector()
                     tmp.SetPtEtaPhiM( p.pt(),p.eta(),p.phi(),0.105)
                     mu-=tmp
 
-                if p.status() ==1 and (abs(p.pdgId())==11 or abs(p.pdgId())==13 ) and abs(mpdg)==15:
-                    lep=ROOT.TLorentzVector()
-                    lep.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0 if abs(p.pdgId())==11 else 0.105)
+                    if p.status() ==1 and (abs(p.pdgId())==11 or abs(p.pdgId())==13 ) and abs(mpdg)==15:
+                        lep=ROOT.TLorentzVector()
+                        lep.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0 if abs(p.pdgId())==11 else 0.105)
 
-                if abs(p.pdgId()) == 15 and abs(mpdg)==37:
-                    tau.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),1.7)
+                    if abs(p.pdgId()) == 15 and abs(mpdg)==37:
+                        tau.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),1.7)
 
-                if abs(p.pdgId()) == 16 and abs(mpdg)==37:
+                    if abs(p.pdgId()) == 16 and abs(mpdg)==37:
                     nu.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0)
 '''
+                inv_mass = (mu[0][0] + mu[1][0])**2 - np.dot(mu[0][1:],mu[1][1:]])
+                h['muon_inv_m'].Fill(inv_mass)
+                print inv_mass
+#                if muon_counter != 2:
+#		    print "mismatch of decayed muons"
 
-            '''
-            event.getByLabel(labelJets, handleJets)
-            njets=0
-            taujet=None
-            leadjetpt=0
-            for j in handleJets.product():
-                if verbose:
-                    print " *) GenJet :   pt : %s  eta : %s   phi : %s " %(j.pt(),j.eta(),j.phi()) 
-                if j.pt()<30: continue
-                if abs(j.eta())>4.7: continue
-                jet=ROOT.TLorentzVector()
-                jet.SetPtEtaPhiM(j.pt(),j.eta(),j.phi(),j.mass())
-                if lep != None and lep.DeltaR(jet)<0.1: continue ## exclude lep-jets
-                if jet.DeltaR(tau) <0.1 :
-                    taujet=jet
-                    continue
-                njets+=1
-                leadjetpt=max(leadjetpt,j.pt())
+
+'''
+                event.getByLabel(labelJets, handleJets)
+                njets=0
+                taujet=None
+                leadjetpt=0
+                for j in handleJets.product():
+                    if verbose:
+                        print " *) GenJet :   pt : %s  eta : %s   phi : %s " %(j.pt(),j.eta(),j.phi()) 
+                    if j.pt()<30: continue
+                    if abs(j.eta())>4.7: continue
+                    jet=ROOT.TLorentzVector()
+                    jet.SetPtEtaPhiM(j.pt(),j.eta(),j.phi(),j.mass())
+                    if lep != None and lep.DeltaR(jet)<0.1: continue ## exclude lep-jets
+                    if jet.DeltaR(tau) <0.1 :
+                        taujet=jet
+                        continue
+                    njets+=1
+                    leadjetpt=max(leadjetpt,j.pt())
                 
 
-            #njets
-            hp=tau+nu ## true
+                #njets
+                hp=tau+nu ## true
 
-            h["mass"].Fill(hp.M())
+                h["mass"].Fill(hp.M())
 
-            #return TMath::Sqrt( 2.* fabs(pt1) * fabs(pt2) * fabs( 1.-TMath::Cos(ChargedHiggs::deltaPhi(phi1,phi2)) ) );
-            if taujet : h["mt-had"] . Fill(math.sqrt(2*taujet.Pt()*met.Pt()*(1.-math.cos(met.DeltaPhi(taujet)))),w)
-            if lep    : h["mt-lep"] . Fill(math.sqrt(2*lep.Pt()*met.Pt()*(1.-math.cos(met.DeltaPhi(lep)))),w)
-            h["njets"] . Fill(njets,w)
-            h["taupt"] . Fill(tau.Pt(),w)
-            if taujet : h["tauhpt"] . Fill(taujet.Pt(),w)
-            if lep    : h["leppt"] . Fill(lep.Pt(),w)
-            h["met"] . Fill(met.Pt(),w)
-            if lep: h["lep-met-dphi"] . Fill(abs(lep.DeltaPhi(met)),w)
-            h["leadjetpt"] . Fill(leadjetpt,w)
-            '''
+                #return TMath::Sqrt( 2.* fabs(pt1) * fabs(pt2) * fabs( 1.-TMath::Cos(ChargedHiggs::deltaPhi(phi1,phi2)) ) );
+                if taujet : h["mt-had"] . Fill(math.sqrt(2*taujet.Pt()*met.Pt()*(1.-math.cos(met.DeltaPhi(taujet)))),w)
+                if lep    : h["mt-lep"] . Fill(math.sqrt(2*lep.Pt()*met.Pt()*(1.-math.cos(met.DeltaPhi(lep)))),w)
+                h["njets"] . Fill(njets,w)
+                h["taupt"] . Fill(tau.Pt(),w)
+                if taujet : h["tauhpt"] . Fill(taujet.Pt(),w)
+                if lep    : h["leppt"] . Fill(lep.Pt(),w)
+                h["met"] . Fill(met.Pt(),w)
+                if lep: h["lep-met-dphi"] . Fill(abs(lep.DeltaPhi(met)),w)
+                h["leadjetpt"] . Fill(leadjetpt,w)
+'''
         except TypeError:
              # eos sucks
             pass
 
-#
 except KeyboardInterrupt:
     pass
 
+# analyzing hist data
+
+
+# file output
 fOut=ROOT.TFile("hist.root","RECREATE")
 fOut.cd()
 for hstr in h:
