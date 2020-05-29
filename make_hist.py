@@ -162,18 +162,7 @@ try:
                         py = p.pt() * math.sin(p.phi())
                         mu.append([energy,px,py,pz])
                         pt.append(p.pt())
-		di_muon = np.zeros(4)
-		for i in np.arange(4):
-		    di_muon[i] = mu[0][i] + mu[1][i]
-		inv_mass = math.sqrt(di_muon[0] ** 2 - di_muon[1] ** 2 - di_muon[2] ** 2 - di_muon[3] ** 2)
-                h['muon_inv_m'].Fill(inv_mass)
-		h['pt1'].Fill(np.amax(pt))
-		h['pt2'].Fill(np.amin(pt))
-	#	print di_muon
-		print pt
-                print inv_mass 
-#                if muon_counter != 2:
-#		    print "mismatch of decayed muons"
+
                 '''
 
                     if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
@@ -195,9 +184,11 @@ try:
 '''
                 inv_mass = (mu[0][0] + mu[1][0])**2 - np.dot(mu[0][1:],mu[1][1:]])
                 h['muon_inv_m'].Fill(inv_mass)
+                h['pt1'].Fill(np.amax(pt))
+		        h['pt2'].Fill(np.amin(pt))
                 print inv_mass
 #                if muon_counter != 2:
-#		    print "mismatch of decayed muons"
+#		             print "mismatch of decayed muons"
 
 
 '''
