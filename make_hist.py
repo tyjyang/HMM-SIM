@@ -78,120 +78,117 @@ h['muon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass", 1000, 0, 100
 ## counters events
 try:
 
-    for f in files:
-        # tries to fetch the file from eos
-        try:
-            # open file (you can use 'edmFileUtil -d /store/whatever.root' to get the physical file name)
-            print "->Opening file",f.split()[0]
-            if 'file:' in f.split()[0] :
-                events = Events(f.split()[0])
-            else:
-                events = Events(eos_redirector + f.split()[0])
-                #events = Events("root://xrootd-cms.infn.it//"+f.split()[0]) #AAA
-                lhe,lheLabel = Handle("LHEEventProduct"),"externalLHEProducer"
-                handlePruned  = Handle ("std::vector<reco::GenParticle>")
-                handleJets  = Handle ("std::vector<reco::GenJet>")
+	for f in files:
+		# tries to fetch the file from eos
+		try:
+			# open file (you can use 'edmFileUtil -d /store/whatever.root' to get the physical file name)
+			print "->Opening file",f.split()[0]
+			if 'file:' in f.split()[0] :
+				events = Events(f.split()[0])
+			else:
+				events = Events(eos_redirector + f.split()[0])
+				#events = Events("root://xrootd-cms.infn.it//"+f.split()[0]) #AAA
+				lhe,lheLabel = Handle("LHEEventProduct"),"externalLHEProducer"
+				handlePruned  = Handle ("std::vector<reco::GenParticle>")
+				handleJets  = Handle ("std::vector<reco::GenJet>")
 
-            if onMiniAOD:
-                labelPruned = ("prunedGenParticles")
-                labelJets = ("slimmedGenJets")
-            else:
-                labelPruned = ("genParticles")
-                labelJets = ("ak4GenJets")
+			if onMiniAOD:
+				labelPruned = ("prunedGenParticles")
+				labelJets = ("slimmedGenJets")
+			else:
+				labelPruned = ("genParticles")
+				labelJets = ("ak4GenJets")
 
-            if events==None: 
-                print "Events is none.Try to continue"
-                continue        
-            for iev,event in enumerate(events):
+			if events==None: 
+				print "Events is none.Try to continue"
+				continue        
+			for iev,event in enumerate(events):
 
-                if onlyEvent != None and event.eventAuxiliary().event() != onlyEvent: continue
+				if onlyEvent != None and event.eventAuxiliary().event() != onlyEvent: continue
 
-                if verbose:
-                    print "\n-> Event %d: run %6d, lumi %4d, event %12d" % (iev,event.eventAuxiliary().run(), event.eventAuxiliary().luminosityBlock(),event.eventAuxiliary().event())
-            
-                # tries to extract genParticles from each event
-                try:
-                    event.getByLabel(lheLabel, lhe)
-                    hepeup = lhe.product().hepeup()
-                    #if verbose:
-                    #  for i in range(0,hepeup.IDUP.size() ):
-                    #    x=ROOT.TLorentzVector()
-                    #    x.SetPxPyPzE( hepeup.PUP[i][0],hepeup.PUP[i][1],hepeup.PUP[i][2],hepeup.PUP[i][3]) 
-                    #    if hepeup.ISTUP[i] != 1: continue;
-                    #    print " *) pdgid=",hepeup.IDUP[i],"pt=",x.Pt(),"eta=",x.Eta(),"phi=",x.Phi()
+				if verbose:
+					print "\n-> Event %d: run %6d, lumi %4d, event %12d" % (iev,event.eventAuxiliary().run(), event.eventAuxiliary().luminosityBlock(),event.eventAuxiliary().event())
 
-                    w=lhe.product().weights()[0].wgt
+				# tries to extract genParticles from each event
+				try:
+					event.getByLabel(lheLabel, lhe)
+					hepeup = lhe.product().hepeup()
+					#if verbose:
+					#  for i in range(0,hepeup.IDUP.size() ):
+					#    x=ROOT.TLorentzVector()
+					#    x.SetPxPyPzE( hepeup.PUP[i][0],hepeup.PUP[i][1],hepeup.PUP[i][2],hepeup.PUP[i][3]) 
+					#    if hepeup.ISTUP[i] != 1: continue;
+					#    print " *) pdgid=",hepeup.IDUP[i],"pt=",x.Pt(),"eta=",x.Eta(),"phi=",x.Phi()
 
-                ### GEN PARTICLES
-                    if verbose:
-                        print " ------------ "
-                    event.getByLabel (labelPruned, handlePruned)
-                    pruned = handlePruned.product()
-                except RuntimeError:
-                    print "-> RuntimeERROR trying to continue"
-                    continue
-                h["all"].Fill(1,w)
-                h["all"].Fill(2,w*w)
-                h["all"].Fill(3,1)
+					w=lhe.product().weights()[0].wgt
 
-                mu=ROOT.TLorentzVector()
-                nu=ROOT.TLorentzVector()
-                met=ROOT.TLorentzVector()
-                #lep=ROOT.TLorentzVector()
-                lep=None
+					# GEN PARTICLES
+					if verbose:
+						print " ------------ "
+					event.getByLabel (labelPruned, handlePruned)
+					pruned = handlePruned.product()
+				except RuntimeError:
+					print "-> RuntimeERROR trying to continue"
+					continue
+				h["all"].Fill(1,w)
+				h["all"].Fill(2,w*w)
+				h["all"].Fill(3,1)
 
-                mu = []
-                pt = []
+				mu=ROOT.TLorentzVector()
+				nu=ROOT.TLorentzVector()
+				met=ROOT.TLorentzVector()
+				#lep=ROOT.TLorentzVector()
+				lep=None
 
-                # loop over each object in genParticles
-                for p in pruned:
+				mu = []
+				pt = []
 
-                    # getting particle info
-                    mother=p.mother(0)
-                    mpdg=0
-                    if mother: mpdg=mother.pdgId()
-                    if verbose: 
-                        print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
+				# loop over each object in genParticles
+				for p in pruned:
 
-                    # Hmm dimuon invariant mass 
-                    if abs(p.pdgId()) == muon_id and mpdg == higgs_id:
-                        magnitude_of_momentum = p.pt() * math.cosh(p.eta())
-                        energy = math.sqrt(magnitude_of_momentum ** 2 + muon_mass ** 2)
-                        pz = p.pt() * math.sinh(p.eta())
-                        px = p.pt() * math.cos(p.phi())
-                        py = p.pt() * math.sin(p.phi())
-                        mu.append([energy,px,py,pz])
-                        pt.append(p.pt())
+					# getting particle info
+					mother=p.mother(0)
+					mpdg=0
+					if mother: mpdg=mother.pdgId()
+					if verbose: 
+						print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
 
-                '''
+					# Hmm dimuon invariant mass 
+					if abs(p.pdgId()) == muon_id and mpdg == higgs_id:
+						magnitude_of_momentum = p.pt() * math.cosh(p.eta())
+						energy = math.sqrt(magnitude_of_momentum ** 2 + muon_mass ** 2)
+						pz = p.pt() * math.sinh(p.eta())
+						px = p.pt() * math.cos(p.phi())
+						py = p.pt() * math.sin(p.phi())
+						mu.append([energy,px,py,pz])
+						pt.append(p.pt())
+						
+					'''
+					if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
+						
+					if p.status() ==1 and abs(p.eta())<4.7 and abs(p.pdgId()) not in [12,14,16]:
+						tmp=ROOT.TLorentzVector()
+						tmp.SetPtEtaPhiM( p.pt(),p.eta(),p.phi(),0.105)
+						mu-=tmp
 
-                    if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
-                 
-                    if p.status() ==1 and abs(p.eta())<4.7 and abs(p.pdgId()) not in [12,14,16]:
-                    tmp=ROOT.TLorentzVector()
-                    tmp.SetPtEtaPhiM( p.pt(),p.eta(),p.phi(),0.105)
-                    mu-=tmp
+					if p.status() ==1 and (abs(p.pdgId())==11 or abs(p.pdgId())==13 ) and abs(mpdg)==15:
+						lep=ROOT.TLorentzVector()
+						lep.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0 if abs(p.pdgId())==11 else 0.105)
 
-                    if p.status() ==1 and (abs(p.pdgId())==11 or abs(p.pdgId())==13 ) and abs(mpdg)==15:
-                        lep=ROOT.TLorentzVector()
-                        lep.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0 if abs(p.pdgId())==11 else 0.105)
+					if abs(p.pdgId()) == 15 and abs(mpdg)==37:
+						tau.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),1.7)
 
-                    if abs(p.pdgId()) == 15 and abs(mpdg)==37:
-                        tau.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),1.7)
-
-                    if abs(p.pdgId()) == 16 and abs(mpdg)==37:
-                    nu.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0)
-'''
-                inv_mass = (mu[0][0] + mu[1][0])**2 - np.dot(mu[0][1:],mu[1][1:]])
-                h['muon_inv_m'].Fill(inv_mass)
-                h['pt1'].Fill(np.amax(pt))
-                h['pt2'].Fill(np.amin(pt))
-                print inv_mass
-#                if muon_counter != 2:
-#		             print "mismatch of decayed muons"
+					if abs(p.pdgId()) == 16 and abs(mpdg)==37:
+						nu.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0)
+					'''
+				inv_mass = (mu[0][0] + mu[1][0])**2 - np.dot(mu[0][1:],mu[1][1:])
+				h['muon_inv_m'].Fill(inv_mass)
+				h['pt1'].Fill(np.amax(pt))
+				h['pt2'].Fill(np.amin(pt))
+				print inv_mass
 
 
-'''
+				'''
                 event.getByLabel(labelJets, handleJets)
                 njets=0
                 taujet=None
@@ -226,10 +223,10 @@ try:
                 h["met"] . Fill(met.Pt(),w)
                 if lep: h["lep-met-dphi"] . Fill(abs(lep.DeltaPhi(met)),w)
                 h["leadjetpt"] . Fill(leadjetpt,w)
-'''
-        except TypeError:
-             # eos sucks
-            pass
+				'''
+		except TypeError:
+			# eos sucks
+			pass
 
 except KeyboardInterrupt:
     pass
@@ -238,10 +235,10 @@ except KeyboardInterrupt:
 
 
 # file output
-fOut=ROOT.TFile("hist.root","RECREATE")
-fOut.cd()
-for hstr in h:
-    h[hstr].Write()
-print "DONE"
+#fOut=ROOT.TFile("hist.root","RECREATE")
+#fOut.cd()
+#for hstr in h:
+#    h[hstr].Write()
+#print "DONE"
 
 
