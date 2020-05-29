@@ -68,10 +68,9 @@ h["all"] = ROOT.TH1D("all","mt",10,0.5,10.5)
 #h["met"] = ROOT.TH1D("met","met",1000,0,1000)
 #h["lep-met-dphi"] = ROOT.TH1D("lep-met-dphi","lep-met-dphi",1000,0,3.1416)
 #h["leadjetpt"] = ROOT.TH1D("leadjetpt","leadjetpt",1000,0,1000)
-h['muon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass", 100, 124.5, 125.5)
+h['dimuon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass", 100, 124.5, 125.5)
 h['pt1'] = ROOT.TH1D("pt1", "Leading Muon Transverse Momentum", 200, 0, 200)
 h['pt2'] = ROOT.TH1D("pt2", "Subsequent Muon Transverse Momentum", 200, 0, 200)
-h['muon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass", 1000, 0, 100)
 
 
 
@@ -185,7 +184,7 @@ try:
 				if muon_counter == 2:
 					mu = np.array(mu)
 					inv_mass = math.sqrt(np.add(mu[0][0], mu[1][0]) ** 2 - np.linalg.norm(np.add(mu[0][1:], mu[1][1:])) ** 2)
-					h['muon_inv_m'].Fill(inv_mass)
+					h['dimuon_inv_m'].Fill(inv_mass)
 					h['pt1'].Fill(np.amax(pt))
 					h['pt2'].Fill(np.amin(pt))
 					print inv_mass
@@ -236,7 +235,7 @@ except KeyboardInterrupt:
     pass
 
 # analyzing hist data
-
+print h['dimuon_inv_m'].Fit("gaus")
 
 # file output
 #fOut=ROOT.TFile("hist.root","RECREATE")
