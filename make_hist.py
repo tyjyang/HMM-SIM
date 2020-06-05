@@ -51,11 +51,12 @@ onMiniAOD=False
 onlyEvent=None
 verbose=False
 
-###########################
-# initializing histograms #
-###########################
+#############################
+# initializing data holders #
+#############################
 h={}
-
+inv_m_arr = []
+pt_arr = []
 #h["mt"] = ROOT.TH1D("mt","mt",1500,500,1500)
 h["all"] = ROOT.TH1D("all","mt",10,0.5,10.5)
 #h["mt-had"] = ROOT.TH1D("mt-had","mt",1000,0,1000)
@@ -68,10 +69,6 @@ h["all"] = ROOT.TH1D("all","mt",10,0.5,10.5)
 #h["met"] = ROOT.TH1D("met","met",1000,0,1000)
 #h["lep-met-dphi"] = ROOT.TH1D("lep-met-dphi","lep-met-dphi",1000,0,3.1416)
 #h["leadjetpt"] = ROOT.TH1D("leadjetpt","leadjetpt",1000,0,1000)
-h['dimuon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass", 100, 124.5, 125.5)
-h['pt1'] = ROOT.TH1D("pt1", "Leading Muon Transverse Momentum", 200, 0, 200)
-h['pt2'] = ROOT.TH1D("pt2", "Subsequent Muon Transverse Momentum", 200, 0, 200)
-
 
 
 ## counters events
@@ -102,7 +99,6 @@ try:
 				print "Events is none.Try to continue"
 				continue        
 			for iev,event in enumerate(events):
-
 				if onlyEvent != None and event.eventAuxiliary().event() != onlyEvent: continue
 
 				if verbose:
@@ -138,8 +134,11 @@ try:
 				met=ROOT.TLorentzVector()
 				#lep=ROOT.TLorentzVector()
 				lep=None
-
-				mu = []
+				
+				# muon four-momentum vector
+				# 2D, first index for muon enumerator, second for 4-vec components
+				p_vec = []
+				# muon transverse momentum, for each muon
 				pt = []
 				muon_counter = 0
 				# loop over each object in genParticles
@@ -160,7 +159,7 @@ try:
 						pz = p.pt() * math.sinh(p.eta())
 						px = p.pt() * math.cos(p.phi())
 						py = p.pt() * math.sin(p.phi())
-						mu.append([energy,px,py,pz])
+						p_vec.append([energy,px,py,pz])
 						pt.append(p.pt())
 						
 					'''
@@ -180,14 +179,15 @@ try:
 
 					if abs(p.pdgId()) == 16 and abs(mpdg)==37:
 						nu.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0)
-					'''
+				'''
+				# check to make sure that we selected the muons from higgs decay
 				if muon_counter == 2:
-					mu = np.array(mu)
-					inv_mass = math.sqrt(np.add(mu[0][0], mu[1][0]) ** 2 - np.linalg.norm(np.add(mu[0][1:], mu[1][1:])) ** 2)
-					h['dimuon_inv_m'].Fill(inv_mass)
-					h['pt1'].Fill(np.amax(pt))
-					h['pt2'].Fill(np.amin(pt))
-					print inv_mass
+					p_vec = np.array(p_vec)
+					inv_m = math.sqrt(np.add(p_vec[0][0], p_vec[1][0]) ** 2 - \
+							   np.linalg.norm(np.add(p_vec[0][1:], p_vec[1][1:])) ** 2)
+					inv_m_arr.append(inv_m)
+					pt_arr.append(pt)
+					# print inv_mass_arr
 				else:
 					print 'wrong config in HMM decay'
 
@@ -235,13 +235,47 @@ except KeyboardInterrupt:
     pass
 
 # analyzing hist data
-print h['dimuon_inv_m'].Fit("gaus")
+inv_m_arr = np.array(inv_m_arr)
+pt_arr = np.array(pt_arr)
+## declare histograms
+h['dimuon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass (Fastsim)", int(inv_m.size ** (1.0/3.0)), np.amin(inv_m), np.amax(inv_m))
+h['pt1'] = ROOT.TH1D("pt1", "Leading Muon Transverse Momentum", 200, 0, 200)
+h['pt2'] = ROOT.TH1D("pt2", "Subsequent Muon Transverse Momentum", 200, 0, 200)
+c = ROOT.TCanvas("c", "c", 1800, 1200)
 
-# file output
-#fOut=ROOT.TFile("hist.root","RECREATE")
-#fOut.cd()
-#for hstr in h:
-#    h[hstr].Write()
-#print "DONE"
+## fill in histograms
+for x in inv_m_arr:
+	h['dimuon_inv_m'].Fill(x)
+for x in pt_arr:
+	h['pt1'].Fill(np.amax(x))
+	h['pt2'].Fill(np.amin(x))
+
+## fit the hist to a gaussian to get mass resolution
+h['dimuon_inv_m'].Fit("gaus")
+
+## get the fit function
+f = h['dimuon_inv_m'].GetFunction("gaus")
+ndf = f.GetNDF()
+chi2 = f.GetChisquare()
+
+## draw legend and add chi2/ndf
+#legend = ROOT.TLegend(0.6, 0.8, 0.99, 0.99)
+#legend.SetBorderSize(0)  # no border
+#legend.SetFillStyle(0)  # make transparent
+#legend.Draw()
+#legend.AddEntry(None, '#chi^{2}' + ' / ndf = {:.3f} / {}'.format(chi2, ndf), '')
+#legend.AddEntry(None, '= {:.3f}'.format(chi2/ndf), '')
+#legend.Draw()
+
+## draw the hist on canvas
+h['dimuon_inv_m'].Draw()
+c.SaveAs("inv_m.png")
+
+##file output
+fOut=ROOT.TFile("fastsim.root","RECREATE")
+fOut.cd()
+for hstr in h:
+    h[hstr].Write()
+print "DONE"
 
 
