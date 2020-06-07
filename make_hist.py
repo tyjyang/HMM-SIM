@@ -38,15 +38,17 @@ higgs_id = 25
 # particle masses in [GeV]
 muon_mass = 0.105
 
-# get a list of files under a certain directory
-LFN = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
+''' get a list of files under a certain directory '''
+dir_fast = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
+dir_full = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FullSim_94X-MINIAODSIM"
+LFN = dir_fast # change directory for fast and fullsim 
 list_of_files = check_output("eos " + eos_redirector + " find -f " + LFN, shell=True)
 blacklist=[]
-#files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
+# files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
 files = list_of_files.split('\n')[0:1]
 
-# set up a few parameters
-onMiniAOD=False
+''' set up a few parameters '''
+onMiniAOD=False # False for fastsim, True for fullsim 
 #onlyEvent=12345
 onlyEvent=None
 verbose=False
@@ -98,11 +100,21 @@ try:
 			if events==None: 
 				print "Events is none.Try to continue"
 				continue        
+			evt_counter = 0 # for testing purpose, so one can terminate the loop after a handful of evts
 			for iev,event in enumerate(events):
+				'''
+				# comment out for production 
+				if evt_counter > 0:
+					break
+				evt_counter += 1
+				'''
+
 				if onlyEvent != None and event.eventAuxiliary().event() != onlyEvent: continue
 
-				if verbose:
-					print "\n-> Event %d: run %6d, lumi %4d, event %12d" % (iev,event.eventAuxiliary().run(), event.eventAuxiliary().luminosityBlock(),event.eventAuxiliary().event())
+				#if verbose:
+				print "\n-> Event %d: run %6d, lumi %4d, event %12d" \
+						% (iev,event.eventAuxiliary().run(), 
+						event.eventAuxiliary().luminosityBlock(),event.eventAuxiliary().event())
 
 				# tries to extract genParticles from each event
 				try:
@@ -129,39 +141,69 @@ try:
 				h["all"].Fill(2,w*w)
 				h["all"].Fill(3,1)
 
-				mu=ROOT.TLorentzVector()
-				nu=ROOT.TLorentzVector()
-				met=ROOT.TLorentzVector()
+				#mu=ROOT.TLorentzVector()
+				#nu=ROOT.TLorentzVector()
+				#met=ROOT.TLorentzVector()
 				#lep=ROOT.TLorentzVector()
-				lep=None
+				#lep=None
 				
-				# muon four-momentum vector
+				'''variables to store physical parameters within each events'''
+				# muon four-momentum vector (E, px, py, pz)
 				# 2D, first index for muon enumerator, second for 4-vec components
-				p_vec = []
-				# muon transverse momentum, for each muon
-				pt = []
+				p_dimuon = []
+				# muon transverse momentum, for the two muons
+				pt_dimuon = []
+				# pesudorapidity, for the two muons
+				eta_dimuon = []
+				# azimuthal angle, for the two muons
+				phi_dimuon = []
+				# higgs transverse momentum
+				pt_higgs = []
+
 				muon_counter = 0
-				# loop over each object in genParticles
+				print_once_higgs = True
+				print_once_muons = True
+				''' loop over each object in genParticles '''
 				for p in pruned:
 
-					# getting particle info
-					mother=p.mother(0)
-					mpdg=0
-					if mother: mpdg=mother.pdgId()
+					# getting particle decay info
+					mother = p.mother(0)
+					mpdg = 0
+					if mother: mpdg = mother.pdgId()
 					if verbose: 
-						print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
+						print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" \
+								%(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
 
-					# Hmm dimuon invariant mass 
+					# getting dimuon and higgs parameters
 					if abs(p.pdgId()) == muon_id and mpdg == higgs_id:
 						muon_counter += 1
+						
+						# calculate muon four momentum (E, px, py, pz)
 						p_mag = p.pt() * math.cosh(p.eta())
 						energy = math.sqrt(p_mag ** 2 + muon_mass ** 2)
 						pz = p.pt() * math.sinh(p.eta())
 						px = p.pt() * math.cos(p.phi())
 						py = p.pt() * math.sin(p.phi())
-						p_vec.append([energy,px,py,pz])
-						pt.append(p.pt())
-						
+						p_dimuon.append([energy,px,py,pz])
+						# muon pt
+						pt_dimuon.append(p.pt())
+						# muon eta
+						eta_dimuon.append(p.eta())
+						if print_once_muons:
+								print "HMM process in this event:"
+								print_once_muons = False
+						print "Final State Particle ID: %d; Mother Particle ID and pt: %d %f; Grandma ID: %d" %\
+								(p.pdgId(), mpdg, mother.pt(), mother.mother(0).pdgId())
+					
+					
+					# checking mother of the higgs
+					if abs(p.pdgId()) == higgs_id:
+						if print_once_higgs:
+							print "All Higgs particles in this event: "
+							print_once_higgs = False
+						print "Particle ID is: %d; Mother ID is: %d; Particle pt is: %f" % \
+								(p.pdgId(), p.mother(0).pdgId(), p.pt())
+
 					'''
 					if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
 						
@@ -182,11 +224,11 @@ try:
 				'''
 				# check to make sure that we selected the muons from higgs decay
 				if muon_counter == 2:
-					p_vec = np.array(p_vec)
-					inv_m = math.sqrt(np.add(p_vec[0][0], p_vec[1][0]) ** 2 - \
-							   np.linalg.norm(np.add(p_vec[0][1:], p_vec[1][1:])) ** 2)
+					p_dimuon = np.array(p_dimuon)
+					inv_m = math.sqrt(np.add(p_dimuon[0][0], p_dimuon[1][0]) ** 2 - \
+							   np.linalg.norm(np.add(p_dimuon[0][1:], p_dimuon[1][1:])) ** 2)
 					inv_m_arr.append(inv_m)
-					pt_arr.append(pt)
+					pt_arr.append(pt_dimuon)
 					# print inv_mass_arr
 				else:
 					print 'wrong config in HMM decay'
@@ -233,12 +275,12 @@ try:
 
 except KeyboardInterrupt:
     pass
-
+'''
 # analyzing hist data
 inv_m_arr = np.array(inv_m_arr)
 pt_arr = np.array(pt_arr)
 ## declare histograms
-h['dimuon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass (Fastsim)", int(inv_m.size ** (1.0/3.0)), np.amin(inv_m), np.amax(inv_m))
+h['dimuon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass (Fastsim)", int(inv_m_arr.size ** (1.0/3.0)), np.amin(inv_m_arr), np.amax(inv_m_arr))
 h['pt1'] = ROOT.TH1D("pt1", "Leading Muon Transverse Momentum", 200, 0, 200)
 h['pt2'] = ROOT.TH1D("pt2", "Subsequent Muon Transverse Momentum", 200, 0, 200)
 c = ROOT.TCanvas("c", "c", 1800, 1200)
@@ -277,5 +319,5 @@ fOut.cd()
 for hstr in h:
     h[hstr].Write()
 print "DONE"
-
+'''
 
