@@ -6,6 +6,7 @@
 import sys,os
 import math
 import numpy as np
+import pandas as pd
 oldargv = sys.argv[:]
 #sys.argv = [ '-b-' ]
 import ROOT
@@ -51,7 +52,7 @@ elif sim_mode == "fastsim":
 list_of_files = check_output("eos " + eos_redirector + " find -f " + LFN, shell=True)
 blacklist=[]
 files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
-#files = list_of_files.split('\n')[0:1]
+#files = list_of_files.split('\n')[0:1] # cutting down num of files, for testing
 
 ''' set up a few parameters '''
 #onlyEvent=12345
@@ -110,7 +111,7 @@ try:
 			evt_counter = 0 # for testing purpose, so one can terminate the loop after a handful of evts
 			for iev,event in enumerate(events):
 				'''
-				# comment out for production 
+				# cutting down num. of evts, comment out for production 
 				if evt_counter > 0:
 					break
 				evt_counter += 1
@@ -164,7 +165,9 @@ try:
 				dimuon_pt = []
 				dimuon_eta = []
 				dimuon_phi = []
-	
+				higgs_pt = 0
+				higgs_phi = 0
+				higgs_eta = 0
 				muon_counter = 0
 				print_once_higgs = True
 				print_once_muons = True
@@ -190,17 +193,13 @@ try:
 						px = p.pt() * math.cos(p.phi())
 						py = p.pt() * math.sin(p.phi())
 
-						# store info of particles to arrays
-						# for higgs we store info from each evt directly into the xx_arr vars
-						# but for muons, since there are 2 from each evt, we are first attaching
-						# them to the xx vars first, then into xx_arr vars later
 						dimuon_p.append([energy,px,py,pz])
 						dimuon_pt.append(p.pt())
 						dimuon_eta.append(p.eta())
 						dimuon_phi.append(p.phi())
-						data['higgs_pt'].append(mother.pt())
-						data['higgs_eta'].append(mother.eta())
-						data['higgs_phi'].append(mother.phi())
+						if higgs_pt == 0: higgs_pt = mother.pt()
+						if higgs_eta == 0: higgs_eta = mother.eta()
+						if higgs_phi == 0: higgs_phi = mother.phi()
 						 
 						'''
 						# print HMM infos
@@ -244,7 +243,7 @@ try:
 					# calculate pt of the dimuon as a whole system
 					dimuon_sys_pt = math.sqrt((dimuon_p[0][1] + dimuon_p[1][1]) ** 2 + 
 											  (dimuon_p[0][2] + dimuon_p[1][2]) ** 2)  
-										# store particle info from each evt to arries
+					# store particle info from each evt to arries
 					data['dimuon_pt_1'].append(np.amax(np.array(dimuon_pt)))
 					data['dimuon_pt_2'].append(np.amin(np.array(dimuon_pt)))
 					data['dimuon_eta_1'].append(np.amax(np.array(dimuon_eta)))
@@ -254,6 +253,9 @@ try:
 					#data['dimuon_p'].append(dimuon_p)
 					data['dimuon_sys_pt'].append(dimuon_sys_pt)
 					data['dimuon_inv_m'].append(dimuon_inv_m)
+					data['higgs_pt'].append(higgs_pt)
+					data['higgs_eta'].append(higgs_eta)
+					data['higgs_phi'].append(higgs_phi)
 				else:
 					print 'wrong config in HMM decay'
 
@@ -300,13 +302,23 @@ try:
 except KeyboardInterrupt:
     pass
 
-# analyzing hist data
-nbin_exp = 1.0/3.0
-for key in data:
-	data[key] = np.array(data[key])
-	h[key] = ROOT.TH1D(key, key + "_" + sim_mode, int(data[key].size ** nbin_exp), np.amin(data[key]), np.amax(data[key]))
-	for evt_entry in data[key]:
-		h[key].Fill(evt_entry)
+# store data into csv files
+#for keys in data:
+#	print keys, len(data[keys])
+data = pd.DataFrame.from_dict(data)
+data.to_csv('data/' + sim_mode + '.csv', index = False)
+
+
+
+
+#nbin = 1.0/3.0
+#for key in data:
+#	data[key] = np.array(data[key])
+#	h[key] = 
+#	for evt_entry in data[key]:
+#		branch.Fill(evt_entry)
+#tree.Fill()
+
 
 ''' more fitting for anothe script
 c = ROOT.TCanvas("c", "c", 1800, 1200)
@@ -331,12 +343,14 @@ chi2 = f.GetChisquare()
 ## draw the hist on canvas
 h['dimuon_inv_m'].Draw()
 c.SaveAs("inv_m.png")
-'''
+
 ##file output
 fOut=ROOT.TFile("./data/" + sim_mode + ".root","RECREATE")
 fOut.cd()
-for hstr in h:
-    h[hstr].Write()
+#for branch in tree:
+tree.Write()
+'''
+
 print "DONE"
 
 
