@@ -34,8 +34,10 @@ nbins = int(num_of_evts ** (1.0/3.0))
 h = {}
 for key in data_fastsim.columns.get_values():
 	c = ROOT.TCanvas("canvas_" + key, "canvas_" + key)
-	h_fast = ROOT.TH1D(key+"_fast", key+"_fast", nbins, min(data_fastsim[key]), max(data_fastsim[key]))
-	h_full = ROOT.TH1D(key+"_full", key+"_full", nbins, min(data_fullsim[key]), max(data_fullsim[key]))
+	lb = (min(data_fastsim[key]) + min(data_fullsim[key])) / 2
+	ub = (max(data_fastsim[key]) + max(data_fullsim[key])) / 2
+	h_fast = ROOT.TH1D(key+"_fast", key+"_fast", nbins, lb, ub)
+	h_full = ROOT.TH1D(key+"_full", key+"_full", nbins, lb, ub)
 	for x in data_fastsim[key]:
 		h_fast.Fill(x)
 	for x in data_fullsim[key][:num_of_evts]:
