@@ -79,7 +79,9 @@ for key in data_fastsim.columns.get_values():
 	c.SaveAs("hist/"+key+".pdf")
 	h[key+"_fast"] = h_fast
 	h[key+"_full"] = h_full
-
+	if key == 'dimuon_inv_m':
+		h[key+"_fast"].Fit("gaus")
+		h[key+"_full"].Fit("gaus")
 
 #nbin = 1.0/3.0
 #for key in data:
