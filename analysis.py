@@ -38,7 +38,7 @@ for key in data_fastsim.columns.get_values():
 	h_full = ROOT.TH1D(key+"_full", key+"_full", nbins, min(data_fullsim[key]), max(data_fullsim[key]))
 	for x in data_fastsim[key]:
 		h_fast.Fill(x)
-	for x in data_fullsim[key]:
+	for x in data_fullsim[key][:num_of_evts]:
 		h_full.Fill(x)
 	h_fast.SetLineColor(ROOT.kBlue);
 	h_full.SetLineColor(ROOT.kRed);
