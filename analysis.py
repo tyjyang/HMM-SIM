@@ -35,9 +35,9 @@ h = {}
 for key in data_fastsim.columns.get_values():
 	c = ROOT.TCanvas("canvas_" + key, "canvas_" + key)
 	h_fast = ROOT.TH1D(key+"_fast", key+"_fast", nbins, min(data_fastsim[key]), max(data_fastsim[key]))
-	h_fast.SetMarkerColorAlpha(ROOT.kBlue,0.35);
+	h_fast.SetLineColor(ROOT.kBlue,0.35);
 	h_full = ROOT.TH1D(key+"_full", key+"_full", nbins, min(data_fullsim[key]), max(data_fullsim[key]))
-	h_full.SetMarkerColorAlpha(ROOT.kRed, 0);
+	h_full.SetLineColor(ROOT.kRed, 0);
 	for x in data_fastsim[key]:
 		h_fast.Fill(x)
 	for x in data_fullsim[key]:
