@@ -36,8 +36,8 @@ for key in data_fastsim.columns.get_values():
 	c = ROOT.TCanvas("canvas_" + key, "canvas_" + key)
 	lb = (min(data_fastsim[key]) + min(data_fullsim[key])) / 2
 	ub = (max(data_fastsim[key]) + max(data_fullsim[key])) / 2
-	h_fast = ROOT.TH1D(key+"_fast", key+"_fast", nbins, lb, ub)
-	h_full = ROOT.TH1D(key+"_full", key+"_full", nbins, lb, ub)
+	h_fast = ROOT.TH1D(key+"_fast", key, nbins, lb, ub)
+	h_full = ROOT.TH1D(key+"_full", key, nbins, lb, ub)
 	for x in data_fastsim[key]:
 		h_fast.Fill(x)
 	for x in data_fullsim[key][:num_of_evts]:
@@ -47,6 +47,15 @@ for key in data_fastsim.columns.get_values():
 	h_fast.Draw()
 	h_full.Draw("SAMES")
 	ROOT.gPad.BuildLegend(0, 1, 0.2, 0.9)
+	ROOT.gPad.Update()
+	st_fast = ROOT.TPaveStats()
+	st_fast = h_fast.FindObject("stats")
+	st_fast.SetX1NDC(0.6)
+	st_fast.SetX2NDC(0.8)
+	st_full = ROOT.TPaveStats()
+	st_full = h_full.FindObject("stats")
+	st_full.SetX1NDC(0.8)
+	st_full.SetX2NDC(1)
 	c.SaveAs("hist/"+key+".pdf")
 	h[key+"_fast"] = h_fast
 	h[key+"_full"] = h_full
