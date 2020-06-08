@@ -47,15 +47,19 @@ for key in data_fastsim.columns.get_values():
 	h_fast.Draw()
 	h_full.Draw("SAMES")
 	ROOT.gPad.BuildLegend(0, 1, 0.2, 0.9)
-	ROOT.gPad.Update()
+	ROOT.gPad.Update() # MANDOTARY for accessing stat boxes below
 	st_fast = ROOT.TPaveStats()
 	st_fast = h_fast.FindObject("stats")
-	st_fast.SetX1NDC(0.6)
-	st_fast.SetX2NDC(0.8)
+	st_fast.SetX1NDC(0.8)
+	st_fast.SetY1NDC(1)
+	st_fast.SetX2NDC(1)
+	st_fast.SetY1NDC(0.85)
 	st_full = ROOT.TPaveStats()
 	st_full = h_full.FindObject("stats")
 	st_full.SetX1NDC(0.8)
+	st_full.SetY1NDC(0.85)
 	st_full.SetX2NDC(1)
+	st_full.SetY2NDC(0.7)
 	c.SaveAs("hist/"+key+".pdf")
 	h[key+"_fast"] = h_fast
 	h[key+"_full"] = h_full
