@@ -39,16 +39,21 @@ higgs_id = 25
 muon_mass = 0.105
 
 ''' get a list of files under a certain directory '''
+sim_mode = "fullsim"
 dir_fast = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
 dir_full = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FullSim_94X-MINIAODSIM"
-LFN = dir_fast # change directory for fast and fullsim 
+if sim_mode == "fullsim":
+	LFN = dir_full
+	onMiniAOD = True
+elif sim_mode == "fastsim":
+	LFN = dir_fast
+	onMiniAOD = False
 list_of_files = check_output("eos " + eos_redirector + " find -f " + LFN, shell=True)
 blacklist=[]
-# files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
-files = list_of_files.split('\n')[0:1]
+files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
+#files = list_of_files.split('\n')[0:1]
 
 ''' set up a few parameters '''
-onMiniAOD=False # False for fastsim, True for fullsim 
 #onlyEvent=12345
 onlyEvent=None
 verbose=False
@@ -56,22 +61,24 @@ verbose=False
 #############################
 # initializing data holders #
 #############################
-h={}
-inv_m_arr = []
-pt_arr = []
-#h["mt"] = ROOT.TH1D("mt","mt",1500,500,1500)
-h["all"] = ROOT.TH1D("all","mt",10,0.5,10.5)
-#h["mt-had"] = ROOT.TH1D("mt-had","mt",1000,0,1000)
-#h["mt-lep"] = ROOT.TH1D("mt-lep","mt",1000,0,1000)
-#h["mass"] = ROOT.TH1D("mass","mass",1000,0,1000)
-#h["njets"] = ROOT.TH1D("njets","njets",10,0,10)
-#h["taupt"] = ROOT.TH1D("taupt","taupt",1000,0,1000)
-#h["tauhpt"] = ROOT.TH1D("tauhpt","tauhpt",1000,0,1000)
-#h["leppt"] = ROOT.TH1D("leppt","leppt",1000,0,1000)
-#h["met"] = ROOT.TH1D("met","met",1000,0,1000)
-#h["lep-met-dphi"] = ROOT.TH1D("lep-met-dphi","lep-met-dphi",1000,0,3.1416)
-#h["leadjetpt"] = ROOT.TH1D("leadjetpt","leadjetpt",1000,0,1000)
+# note, "dimuon" here means 2 muons separately, not the two muons as
+# a whole system, unless otherwise noted
+data = {}
+data['dimuon_pt_1'] = []
+data['dimuon_eta_1'] = []
+data['dimuon_phi_1'] = []
+data['dimuon_pt_2'] = []
+data['dimuon_eta_2'] = []
+data['dimuon_phi_2'] = []
+#data['dimuon_p'] = []
+data['dimuon_inv_m'] = []
+data['dimuon_sys_pt'] = []
+data['higgs_pt'] = []
+data['higgs_eta'] = []
+data['higgs_phi'] = []
 
+h = {}
+h["all"] = ROOT.TH1D("all","mt",10,0.5,10.5)
 
 ## counters events
 try:
@@ -148,18 +155,16 @@ try:
 				#lep=None
 				
 				'''variables to store physical parameters within each events'''
+				'''info from all events are attached to the xx_arr variables at the end'''
 				# muon four-momentum vector (E, px, py, pz)
 				# 2D, first index for muon enumerator, second for 4-vec components
-				p_dimuon = []
-				# muon transverse momentum, for the two muons
-				pt_dimuon = []
-				# pesudorapidity, for the two muons
-				eta_dimuon = []
-				# azimuthal angle, for the two muons
-				phi_dimuon = []
-				# higgs transverse momentum
-				pt_higgs = []
-
+				# note, "dimuon" here means 2 muons separately, not the two muons as
+				# a whole system, unless otherwise noted
+				dimuon_p = []
+				dimuon_pt = []
+				dimuon_eta = []
+				dimuon_phi = []
+	
 				muon_counter = 0
 				print_once_higgs = True
 				print_once_muons = True
@@ -184,26 +189,35 @@ try:
 						pz = p.pt() * math.sinh(p.eta())
 						px = p.pt() * math.cos(p.phi())
 						py = p.pt() * math.sin(p.phi())
-						p_dimuon.append([energy,px,py,pz])
-						# muon pt
-						pt_dimuon.append(p.pt())
-						# muon eta
-						eta_dimuon.append(p.eta())
+
+						# store info of particles to arrays
+						# for higgs we store info from each evt directly into the xx_arr vars
+						# but for muons, since there are 2 from each evt, we are first attaching
+						# them to the xx vars first, then into xx_arr vars later
+						dimuon_p.append([energy,px,py,pz])
+						dimuon_pt.append(p.pt())
+						dimuon_eta.append(p.eta())
+						dimuon_phi.append(p.phi())
+						data['higgs_pt'].append(mother.pt())
+						data['higgs_eta'].append(mother.eta())
+						data['higgs_phi'].append(mother.phi())
+						 
+						'''
+						# print HMM infos
 						if print_once_muons:
 								print "HMM process in this event:"
 								print_once_muons = False
 						print "Final State Particle ID: %d; Mother Particle ID and pt: %d %f; Grandma ID: %d" %\
 								(p.pdgId(), mpdg, mother.pt(), mother.mother(0).pdgId())
-					
-					
-					# checking mother of the higgs
+
+					# print mother of the higgs
 					if abs(p.pdgId()) == higgs_id:
 						if print_once_higgs:
 							print "All Higgs particles in this event: "
 							print_once_higgs = False
 						print "Particle ID is: %d; Mother ID is: %d; Particle pt is: %f" % \
 								(p.pdgId(), p.mother(0).pdgId(), p.pt())
-
+					'''
 					'''
 					if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
 						
@@ -224,12 +238,22 @@ try:
 				'''
 				# check to make sure that we selected the muons from higgs decay
 				if muon_counter == 2:
-					p_dimuon = np.array(p_dimuon)
-					inv_m = math.sqrt(np.add(p_dimuon[0][0], p_dimuon[1][0]) ** 2 - \
-							   np.linalg.norm(np.add(p_dimuon[0][1:], p_dimuon[1][1:])) ** 2)
-					inv_m_arr.append(inv_m)
-					pt_arr.append(pt_dimuon)
-					# print inv_mass_arr
+					dimuon_p = np.array(dimuon_p)
+					dimuon_inv_m = math.sqrt(np.add(dimuon_p[0][0], dimuon_p[1][0]) ** 2 - \
+							   np.linalg.norm(np.add(dimuon_p[0][1:], dimuon_p[1][1:])) ** 2)
+					# calculate pt of the dimuon as a whole system
+					dimuon_sys_pt = math.sqrt((dimuon_p[0][1] + dimuon_p[1][1]) ** 2 + 
+											  (dimuon_p[0][2] + dimuon_p[1][2]) ** 2)  
+										# store particle info from each evt to arries
+					data['dimuon_pt_1'].append(np.amax(np.array(dimuon_pt)))
+					data['dimuon_pt_2'].append(np.amin(np.array(dimuon_pt)))
+					data['dimuon_eta_1'].append(np.amax(np.array(dimuon_eta)))
+					data['dimuon_eta_2'].append(np.amin(np.array(dimuon_eta)))
+					data['dimuon_phi_1'].append(np.amax(np.array(dimuon_phi)))
+					data['dimuon_phi_2'].append(np.amin(np.array(dimuon_phi)))
+					#data['dimuon_p'].append(dimuon_p)
+					data['dimuon_sys_pt'].append(dimuon_sys_pt)
+					data['dimuon_inv_m'].append(dimuon_inv_m)
 				else:
 					print 'wrong config in HMM decay'
 
@@ -275,22 +299,17 @@ try:
 
 except KeyboardInterrupt:
     pass
-'''
-# analyzing hist data
-inv_m_arr = np.array(inv_m_arr)
-pt_arr = np.array(pt_arr)
-## declare histograms
-h['dimuon_inv_m'] = ROOT.TH1D("muon_inv_m", "Di-muon Invariant Mass (Fastsim)", int(inv_m_arr.size ** (1.0/3.0)), np.amin(inv_m_arr), np.amax(inv_m_arr))
-h['pt1'] = ROOT.TH1D("pt1", "Leading Muon Transverse Momentum", 200, 0, 200)
-h['pt2'] = ROOT.TH1D("pt2", "Subsequent Muon Transverse Momentum", 200, 0, 200)
-c = ROOT.TCanvas("c", "c", 1800, 1200)
 
-## fill in histograms
-for x in inv_m_arr:
-	h['dimuon_inv_m'].Fill(x)
-for x in pt_arr:
-	h['pt1'].Fill(np.amax(x))
-	h['pt2'].Fill(np.amin(x))
+# analyzing hist data
+nbin_exp = 1.0/3.0
+for key in data:
+	data[key] = np.array(data[key])
+	h[key] = ROOT.TH1D(key, key + "_" + sim_mode, int(data[key].size ** nbin_exp), np.amin(data[key]), np.amax(data[key]))
+	for evt_entry in data[key]:
+		h[key].Fill(evt_entry)
+
+''' more fitting for anothe script
+c = ROOT.TCanvas("c", "c", 1800, 1200)
 
 ## fit the hist to a gaussian to get mass resolution
 h['dimuon_inv_m'].Fit("gaus")
@@ -312,12 +331,12 @@ chi2 = f.GetChisquare()
 ## draw the hist on canvas
 h['dimuon_inv_m'].Draw()
 c.SaveAs("inv_m.png")
-
+'''
 ##file output
-fOut=ROOT.TFile("fastsim.root","RECREATE")
+fOut=ROOT.TFile("./data/" + sim_mode + ".root","RECREATE")
 fOut.cd()
 for hstr in h:
     h[hstr].Write()
 print "DONE"
-'''
+
 
