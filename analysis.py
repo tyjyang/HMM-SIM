@@ -45,7 +45,7 @@ for key in data_fastsim.columns.get_values():
 	h_fast.SetLineColor(ROOT.kBlue);
 	h_full.SetLineColor(ROOT.kRed);
 	h_fast.Draw()
-	h_full.Draw("same")
+	h_full.Draw("sames")
 	ROOT.gPad.BuildLegend(0, 1, 0.2, 0.9)
 	c.SaveAs("hist/"+key+".pdf")
 	h[key+"_fast"] = h_fast
