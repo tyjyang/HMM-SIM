@@ -29,10 +29,10 @@ ROOT.gROOT.SetBatch(True) # disable graph display
 
 data_fastsim = pd.read_csv("data/fastsim.csv", skipinitialspace=True)
 data_fullsim = pd.read_csv("data/fullsim.csv", skipinitialspace=True)
-data_fastsim['met'] = data_fastsim["higgs_pt"] - data_fastsim["dimuon_sys_pt"]
-data_fullsim['met'] = data_fullsim["higgs_pt"] - data_fullsim["dimuon_sys_pt"]
-data_fastsim['delta_eta'] = abs(data_fastsim["dimuon_eta_1"] - data_fastsim["dimuon_eta_2"])
-data_fullsim['delta_eta'] = abs(data_fullsim["dimuon_eta_1"] - data_fullsim["dimuon_eta_2"])
+data_fastsim['Hmm_met'] = data_fastsim["higgs_pt"] - data_fastsim["dimuon_sys_pt"]
+data_fullsim['Hmm_met'] = data_fullsim["higgs_pt"] - data_fullsim["dimuon_sys_pt"]
+data_fastsim['dimuon_delta_eta'] = abs(data_fastsim["dimuon_eta_1"] - data_fastsim["dimuon_eta_2"])
+data_fullsim['dimuon_delta_eta'] = abs(data_fullsim["dimuon_eta_1"] - data_fullsim["dimuon_eta_2"])
 
 #data_fastsim = pd.concat([data_fastsim, met_fast, delta_eta_fast], axis = 1)
 #print data_fastsim.columns.get_values()
