@@ -43,9 +43,9 @@ h = {}
 
 for key in data_fastsim.columns.get_values():
 	c = ROOT.TCanvas("canvas_" + key, "canvas_" + key)
+	data_fastsim[key] = np.array(data_fastsim[key])
+	data_fullsim[key] = np.array(data_fullsim[key])
 	# upper and lower bounds
-	print key
-	print data_fastsim[key], data_fullsim[key]
 	lb = (np.amin(data_fastsim[key]) + np.amin(data_fullsim[key])) / 2
 	ub = (np.amax(data_fastsim[key]) + np.amax(data_fullsim[key])) / 2
 	# declare hists and fill in data points
