@@ -43,16 +43,23 @@ h = {}
 
 for key in data_fastsim.columns.get_values():
 	c = ROOT.TCanvas("canvas_" + key, "canvas_" + key)
-	lb = (min(data_fastsim[key]) + min(data_fullsim[key])) / 2
-	ub = (max(data_fastsim[key]) + max(data_fullsim[key])) / 2
+	# upper and lower bounds
+	print key
+	print data_fastsim[key], data_fullsim[key]
+	lb = (np.amin(data_fastsim[key]) + np.amin(data_fullsim[key])) / 2
+	ub = (np.amax(data_fastsim[key]) + np.amax(data_fullsim[key])) / 2
+	# declare hists and fill in data points
 	h_fast = ROOT.TH1D(key+"_fast", key+"_fast", nbins, lb, ub)
 	h_full = ROOT.TH1D(key+"_full", key+"_full", nbins, lb, ub)
 	for x in data_fastsim[key]:
 		h_fast.Fill(x)
 	for x in data_fullsim[key][:num_of_evts]:
 		h_full.Fill(x)
+	'''set graph properties'''
 	h_fast.SetLineColor(ROOT.kBlue);
 	h_full.SetLineColor(ROOT.kRed);
+	h_fast.SetMinimum(0)
+	h_full.SetMinimum(0)
 	h_fast.Draw()
 	h_full.Draw("SAMES")
 	ROOT.gPad.BuildLegend(0, 1, 0.2, 0.9)

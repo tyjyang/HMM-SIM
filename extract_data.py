@@ -51,13 +51,13 @@ elif sim_mode == "fastsim":
 	onMiniAOD = False
 list_of_files = check_output("eos " + eos_redirector + " find -f " + LFN, shell=True)
 blacklist=[]
-files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
-#files = list_of_files.split('\n')[0:1] # cutting down num of files, for testing
+#files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
+files = list_of_files.split('\n')[0:1] # cutting down num of files, for testing
 
 ''' set up a few parameters '''
 #onlyEvent=12345
 onlyEvent=None
-verbose=False
+verbose=True
 
 #############################
 # initializing data holders #
@@ -110,12 +110,12 @@ try:
 				continue        
 			evt_counter = 0 # for testing purpose, so one can terminate the loop after a handful of evts
 			for iev,event in enumerate(events):
-				'''
+				
 				# cutting down num. of evts, comment out for production 
 				if evt_counter > 0:
 					break
 				evt_counter += 1
-				'''
+				
 
 				if onlyEvent != None and event.eventAuxiliary().event() != onlyEvent: continue
 
@@ -142,9 +142,15 @@ try:
 						print " ------------ "
 					event.getByLabel (labelPruned, handlePruned)
 					pruned = handlePruned.product()
+					
+					labelMuon = ("recoMuon")
+					handleMuon = Handle ("std::vector<reco::Muon>")
+					event.getByLabel(labelMuon, handleMuon)
+					recomuons = handleMuon.product()
 				except RuntimeError:
 					print "-> RuntimeERROR trying to continue"
 					continue
+				print "past try block"
 				h["all"].Fill(1,w)
 				h["all"].Fill(2,w*w)
 				h["all"].Fill(3,1)
@@ -172,14 +178,18 @@ try:
 				print_once_higgs = True
 				print_once_muons = True
 				''' loop over each object in genParticles '''
+				for mu in recomuons:
+					print "mu loop"
+					print mu.pdgId(), mu.pt(), mu.eta()
 				for p in pruned:
 
 					# getting particle decay info
 					mother = p.mother(0)
 					mpdg = 0
 					if mother: mpdg = mother.pdgId()
-					if verbose: 
-						print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" \
+					#if verbose:
+					print "genParticle loop"
+					print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" \
 								%(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
 
 					# getting dimuon and higgs parameters
