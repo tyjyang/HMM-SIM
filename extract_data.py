@@ -41,7 +41,7 @@ muon_mass = 0.105
 higgs_mass = 125
 ''' get a list of files under a certain directory '''
 num_files = 15
-sim_mode = "fastsim"
+sim_mode = "fullsim"
 dir_fast = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
 dir_full = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FullSim_94X-MINIAODSIM"
 if sim_mode == "fullsim":
@@ -209,6 +209,7 @@ try:
 				print_once_muons = True
 				m_mu_mu_candidates = []
 				delta_R_reco_candidates = []
+				ddelta_R_candidates = []
 				higgs_res_generous = 15
 
 				''' loop over each object in genParticles '''
@@ -252,10 +253,12 @@ try:
 							p1 = to_Epxpypz(mu.mass(), mu.pt(), mu.eta(), mu.phi())
 							p2 = to_Epxpypz(second_mu.mass(), second_mu.pt(), second_mu.eta(), second_mu.phi())
 							delta_R_reco = get_delta_R(mu.eta(), mu.phi(), second_mu.eta(), second_mu.phi())
-							if abs(delta_R_reco - delta_R_gen) < 0.4 and delta_R_gen:
+							ddelta_R = abs(delta_R_reco - delta_R_gen)
+							if ddelta_R < 0.4 and delta_R_gen:
 								m_mu_mu = binary_inv_m(p1, p2)
 								m_mu_mu_candidates.append(m_mu_mu)
 								delta_R_reco_candidates.append(delta_R_reco)
+								ddelta_R_candidates.append(ddelta_R)
 						else:
 							continue
 						
@@ -265,7 +268,7 @@ try:
 				if len(m_mu_mu_candidates):
 					m_mu_mu_candidates = np.array(m_mu_mu_candidates)
 					delta_R_reco_candidates = np.array(delta_R_reco_candidates)
-					i_min = np.where(m_mu_mu_candidates == np.amin(m_mu_mu_candidates))[0]
+					i_min = np.where(ddelta_R_candidates == np.amin(ddelta_R_candidates))[0]
 					data['m_mu_mu'].append(float(m_mu_mu_candidates[i_min]))
 					data['delta_R'].append(float(delta_R_reco_candidates[i_min]))
 				else:
