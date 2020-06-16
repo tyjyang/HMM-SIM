@@ -210,6 +210,7 @@ try:
 				m_mu_mu_candidates = []
 				delta_R_reco_candidates = []
 				ddelta_R_candidates = []
+				dm_mu_mu_candidates = []
 				higgs_res_generous = 15
 
 				''' loop over each object in genParticles '''
@@ -257,6 +258,7 @@ try:
 							if ddelta_R < 0.4 and delta_R_gen:
 								m_mu_mu = binary_inv_m(p1, p2)
 								m_mu_mu_candidates.append(m_mu_mu)
+								dm_mu_mu_candidates.append(abs(m_mu_mu - higgs_mass))
 								delta_R_reco_candidates.append(delta_R_reco)
 								ddelta_R_candidates.append(ddelta_R)
 						else:
@@ -268,9 +270,13 @@ try:
 				if len(m_mu_mu_candidates):
 					m_mu_mu_candidates = np.array(m_mu_mu_candidates)
 					delta_R_reco_candidates = np.array(delta_R_reco_candidates)
-					i_min = np.where(ddelta_R_candidates == np.amin(ddelta_R_candidates))[0]
-					data['m_mu_mu'].append(float(m_mu_mu_candidates[i_min]))
-					data['delta_R'].append(float(delta_R_reco_candidates[i_min]))
+					i_dR_min = np.where(ddelta_R_candidates == np.amin(ddelta_R_candidates))[0]
+					i_m_min = np.where(dm_mu_mu_candidates == np.amin(dm_mu_mu_candidates))[0]
+					if i_dR_min == i_m_min:
+						data['m_mu_mu'].append(float(m_mu_mu_candidates[i_min]))
+						data['delta_R'].append(float(delta_R_reco_candidates[i_min]))
+					else: 
+
 				else:
 					print 'No match between reco and gen muons based on delta_R'
 					
