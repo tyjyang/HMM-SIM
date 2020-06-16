@@ -27,15 +27,17 @@ import re
 
 ROOT.gROOT.SetBatch(True) # disable graph display
 
-data_fastsim = pd.read_csv("data/fastsim.csv", skipinitialspace=True)
-data_fullsim = pd.read_csv("data/fullsim.csv", skipinitialspace=True)
-data_fastsim['Hmm_met'] = data_fastsim["higgs_pt"] - data_fastsim["dimuon_sys_pt"]
-data_fullsim['Hmm_met'] = data_fullsim["higgs_pt"] - data_fullsim["dimuon_sys_pt"]
-data_fastsim['dimuon_delta_eta'] = abs(data_fastsim["dimuon_eta_1"] - data_fastsim["dimuon_eta_2"])
-data_fullsim['dimuon_delta_eta'] = abs(data_fullsim["dimuon_eta_1"] - data_fullsim["dimuon_eta_2"])
+data_fastsim = pd.read_csv("data/m_mu_mu_fastsim.csv", skipinitialspace = True, dtype = float)
+data_fullsim = pd.read_csv("data/m_mu_mu_fullsim.csv", skipinitialspace=True, dtype = float)
+#data_fastsim['Hmm_met'] = data_fastsim["higgs_pt"] - data_fastsim["dimuon_sys_pt"]
+#data_fullsim['Hmm_met'] = data_fullsim["higgs_pt"] - data_fullsim["dimuon_sys_pt"]
+#data_fastsim['dimuon_delta_eta'] = abs(data_fastsim["dimuon_eta_1"] - data_fastsim["dimuon_eta_2"])
+#data_fullsim['dimuon_delta_eta'] = abs(data_fullsim["dimuon_eta_1"] - data_fullsim["dimuon_eta_2"])
 
 #data_fastsim = pd.concat([data_fastsim, met_fast, delta_eta_fast], axis = 1)
 #print data_fastsim.columns.get_values()
+
+#data_fullsim['dimuon_inv_m'] = data_fullsim.loc[data_fullsim['dimuon_inv_m'] < 125]
 num_of_evts = data_fastsim.shape[0]
 nbins = int(num_of_evts ** (1.0/3.0))
 h = {}
@@ -46,8 +48,10 @@ for key in data_fastsim.columns.get_values():
 	data_fastsim[key] = np.array(data_fastsim[key])
 	data_fullsim[key] = np.array(data_fullsim[key])
 	# upper and lower bounds
+	print type(np.amin(data_fastsim[key])), type(np.amin(data_fullsim[key]))
 	lb = (np.amin(data_fastsim[key]) + np.amin(data_fullsim[key])) / 2
 	ub = (np.amax(data_fastsim[key]) + np.amax(data_fullsim[key])) / 2
+	print np.amax(data_fastsim[key]), np.amax(data_fullsim[key])
 	# declare hists and fill in data points
 	h_fast = ROOT.TH1D(key+"_fast", key+"_fast", nbins, lb, ub)
 	h_full = ROOT.TH1D(key+"_full", key+"_full", nbins, lb, ub)

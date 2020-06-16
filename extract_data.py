@@ -38,9 +38,10 @@ higgs_id = 25
 
 # particle masses in [GeV]
 muon_mass = 0.105
-
+higgs_mass = 125
 ''' get a list of files under a certain directory '''
-sim_mode = "fullsim"
+num_files = 15
+sim_mode = "fastsim"
 dir_fast = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
 dir_full = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FullSim_94X-MINIAODSIM"
 if sim_mode == "fullsim":
@@ -51,13 +52,42 @@ elif sim_mode == "fastsim":
 	onMiniAOD = False
 list_of_files = check_output("eos " + eos_redirector + " find -f " + LFN, shell=True)
 blacklist=[]
-#files = [x for x in list_of_files.split('\n') if '/store' in x and x not in blacklist] 
-files = list_of_files.split('\n')[0:1] # cutting down num of files, for testing
+files = [x for x in list_of_files.split('\n')[0:num_files] if '/store' in x and x not in blacklist] 
+#files = list_of_files.split('\n')[0:1] # cutting down num of files, for testing
 
 ''' set up a few parameters '''
 #onlyEvent=12345
 onlyEvent=None
 verbose=True
+
+#######################
+# Function Definition #
+#######################
+
+# convert the four momentum of a particle 
+# from (m, pt, eta, phi) to (E, px, py, pz)
+# requires (m, pt, eta, phi) 
+# returns (E, px, py, pz) in a 1D numpy array
+def to_Epxpypz(m, pt, eta, phi):
+	p_mag = pt * math.cosh(eta)
+	E = math.sqrt(p_mag ** 2 + m ** 2)
+	pz = pt * math.sinh(eta)
+	px = pt * math.cos(phi)
+	py = pt * math.sin(phi)
+	return np.array([E, px, py, pz])
+
+# calculate the invariant mass of a two-particle system
+# requires four-momenta of the two particles in np array in [E, px, py, pz]
+# return the invariant mass as a double
+def binary_inv_m(p1, p2):
+	return math.sqrt(np.add(p1[0], p2[0]) ** 2 - \
+				np.linalg.norm(np.add(p1[1:], p2[1:])) ** 2)
+
+# calculate the delta_R geometric info of 2 particles
+# requires the phi and eta info of the 2 particles
+# returns delta_R
+def get_delta_R(eta1, phi1, eta2, phi2):
+	return math.sqrt((phi1 - phi2) ** 2 + (eta1 - eta2) ** 2)
 
 #############################
 # initializing data holders #
@@ -65,27 +95,32 @@ verbose=True
 # note, "dimuon" here means 2 muons separately, not the two muons as
 # a whole system, unless otherwise noted
 data = {}
-data['dimuon_pt_1'] = []
-data['dimuon_eta_1'] = []
-data['dimuon_phi_1'] = []
-data['dimuon_pt_2'] = []
-data['dimuon_eta_2'] = []
-data['dimuon_phi_2'] = []
+#data['dimuon_pt_1'] = []
+#data['dimuon_eta_1'] = []
+#data['dimuon_phi_1'] = []
+#data['dimuon_pt_2'] = []
+#data['dimuon_eta_2'] = []
+#data['dimuon_phi_2'] = []
 #data['dimuon_p'] = []
-data['dimuon_inv_m'] = []
-data['dimuon_sys_pt'] = []
-data['higgs_pt'] = []
-data['higgs_eta'] = []
-data['higgs_phi'] = []
+data['m_mu_mu'] = []
+#data['dimuon_sys_pt'] = []
+#data['higgs_pt'] = []
+#data['higgs_eta'] = []
+#data['higgs_phi'] = []
+data['delta_R'] = []
 
 h = {}
 h["all"] = ROOT.TH1D("all","mt",10,0.5,10.5)
 
-## counters events
+######################################
+# Main loop over events in each file #
+######################################
+# allow termination by ctrl+c
 try:
 
 	for f in files:
-		# tries to fetch the file from eos
+
+		# tries to fetch the file from eos, pass if fetching is unsuccessful for one file
 		try:
 			# open file (you can use 'edmFileUtil -d /store/whatever.root' to get the physical file name)
 			print "->Opening file",f.split()[0]
@@ -94,27 +129,33 @@ try:
 			else:
 				events = Events(eos_redirector + f.split()[0])
 				#events = Events("root://xrootd-cms.infn.it//"+f.split()[0]) #AAA
-				lhe,lheLabel = Handle("LHEEventProduct"),"externalLHEProducer"
-				handlePruned  = Handle ("std::vector<reco::GenParticle>")
-				handleJets  = Handle ("std::vector<reco::GenJet>")
+			
+			lhe,lheLabel = Handle("LHEEventProduct"),"externalLHEProducer"
+			handlePruned  = Handle ("std::vector<reco::GenParticle>")
+			handleJets  = Handle ("std::vector<reco::GenJet>")
 
 			if onMiniAOD:
 				labelPruned = ("prunedGenParticles")
 				labelJets = ("slimmedGenJets")
+				labelMuon = ("slimmedMuons")
+				handleMuon = Handle ("vector<pat::Muon>")
 			else:
 				labelPruned = ("genParticles")
 				labelJets = ("ak4GenJets")
-
+				labelMuon = ("muons")
+				handleMuon = Handle ("vector<reco::Muon>")
+			
 			if events==None: 
 				print "Events is none.Try to continue"
 				continue        
+			
 			evt_counter = 0 # for testing purpose, so one can terminate the loop after a handful of evts
 			for iev,event in enumerate(events):
 				
 				# cutting down num. of evts, comment out for production 
-				if evt_counter > 0:
-					break
-				evt_counter += 1
+				#if evt_counter > 29:
+				#	break
+				#evt_counter += 1
 				
 
 				if onlyEvent != None and event.eventAuxiliary().event() != onlyEvent: continue
@@ -143,31 +184,18 @@ try:
 					event.getByLabel (labelPruned, handlePruned)
 					pruned = handlePruned.product()
 					
-					labelMuon = ("recoMuon")
-					handleMuon = Handle ("std::vector<reco::Muon>")
 					event.getByLabel(labelMuon, handleMuon)
 					recomuons = handleMuon.product()
 				except RuntimeError:
 					print "-> RuntimeERROR trying to continue"
 					continue
-				print "past try block"
-				h["all"].Fill(1,w)
-				h["all"].Fill(2,w*w)
-				h["all"].Fill(3,1)
-
-				#mu=ROOT.TLorentzVector()
-				#nu=ROOT.TLorentzVector()
-				#met=ROOT.TLorentzVector()
-				#lep=ROOT.TLorentzVector()
-				#lep=None
 				
 				'''variables to store physical parameters within each events'''
-				'''info from all events are attached to the xx_arr variables at the end'''
 				# muon four-momentum vector (E, px, py, pz)
 				# 2D, first index for muon enumerator, second for 4-vec components
 				# note, "dimuon" here means 2 muons separately, not the two muons as
 				# a whole system, unless otherwise noted
-				dimuon_p = []
+				dimuon_p4 = []
 				dimuon_pt = []
 				dimuon_eta = []
 				dimuon_phi = []
@@ -175,12 +203,79 @@ try:
 				higgs_phi = 0
 				higgs_eta = 0
 				muon_counter = 0
+				delta_R_gen = 0
+				delta_R_reco = 0
 				print_once_higgs = True
 				print_once_muons = True
+				m_mu_mu_candidates = []
+				delta_R_reco_candidates = []
+				higgs_res_generous = 15
+
 				''' loop over each object in genParticles '''
-				for mu in recomuons:
-					print "mu loop"
-					print mu.pdgId(), mu.pt(), mu.eta()
+				for p in pruned:
+					if not p.mother(0): continue
+					if p.mother(0).pdgId() == higgs_id and abs(p.pdgId()) == muon_id:
+						muon_counter += 1
+						dimuon_p4.append([p.mass(), p.pt(), p.eta(), p.phi()])
+						#print "Muon E is {}, px is {}, py is {}, pz is {}"\
+						#	.format(*to_Epxpypz(p.mass(), p.pt(), p.eta(), p.phi()))
+
+				# check to make sure that we selected the muons from higgs decay
+				if muon_counter == 2:
+					dimuon_p4 = np.array(dimuon_p4)
+					#print binary_inv_m(dimuon_p4[0], dimuon_p4[1])
+					delta_R_gen = get_delta_R(dimuon_p4[0][2], dimuon_p4[0][3], dimuon_p4[1][2], dimuon_p4[1][3])
+					# calculate pt of the dimuon as a whole system
+					#dimuon_sys_pt = math.sqrt((dimuon_p[0][1] + dimuon_p[1][1]) ** 2 + 
+					#						  (dimuon_p[0][2] + dimuon_p[1][2]) ** 2)  
+					# store particle info from each evt to arries
+					#data['dimuon_pt_1'].append(np.amax(np.array(dimuon_pt)))
+					#data['dimuon_pt_2'].append(np.amin(np.array(dimuon_pt)))
+					#data['dimuon_eta_1'].append(np.amax(np.array(dimuon_eta)))
+					#data['dimuon_eta_2'].append(np.amin(np.array(dimuon_eta)))
+					#data['dimuon_phi_1'].append(np.amax(np.array(dimuon_phi)))
+					#data['dimuon_phi_2'].append(np.amin(np.array(dimuon_phi)))
+					#data['dimuon_p'].append(dimuon_p)
+					#data['dimuon_sys_pt'].append(dimuon_sys_pt)
+					#data['dimuon_inv_m'].append(dimuon_inv_m)
+					#data['higgs_pt'].append(higgs_pt)
+					#data['higgs_eta'].append(higgs_eta)
+					#data['higgs_phi'].append(higgs_phi)
+				else:
+					continue
+					#print 'wrong config in HMM decay'
+
+				'''loop over reco muons'''
+				for ind, mu in enumerate(recomuons[:-1]):
+					for second_mu in recomuons[ind+1:]:
+						if mu.charge()*second_mu.charge() == -1:
+							p1 = to_Epxpypz(mu.mass(), mu.pt(), mu.eta(), mu.phi())
+							p2 = to_Epxpypz(second_mu.mass(), second_mu.pt(), second_mu.eta(), second_mu.phi())
+							delta_R_reco = get_delta_R(mu.eta(), mu.phi(), second_mu.eta(), second_mu.phi())
+							if abs(delta_R_reco - delta_R_gen) < 0.4 and delta_R_gen:
+								m_mu_mu = binary_inv_m(p1, p2)
+								m_mu_mu_candidates.append(m_mu_mu)
+								delta_R_reco_candidates.append(delta_R_reco)
+						else:
+							continue
+						
+				print 'delta_R in reco:', delta_R_reco_candidates
+
+
+				if len(m_mu_mu_candidates):
+					m_mu_mu_candidates = np.array(m_mu_mu_candidates)
+					delta_R_reco_candidates = np.array(delta_R_reco_candidates)
+					i_min = np.where(m_mu_mu_candidates == np.amin(m_mu_mu_candidates))[0]
+					data['m_mu_mu'].append(float(m_mu_mu_candidates[i_min]))
+					data['delta_R'].append(float(delta_R_reco_candidates[i_min]))
+				else:
+					print 'No match between reco and gen muons based on delta_R'
+					
+					#print np.amin(off_center)
+						#print "Muon E is {}, px is {}, py is {}, pz is {}"\
+						#.format(*to_Epxpypz(mu.mass(), mu.pt(), mu.eta(), mu.phi()))
+
+				'''
 				for p in pruned:
 
 					# getting particle decay info
@@ -188,7 +283,6 @@ try:
 					mpdg = 0
 					if mother: mpdg = mother.pdgId()
 					#if verbose:
-					print "genParticle loop"
 					print " *) PdgId : %s   pt : %s  eta : %s   phi : %s mother : %s" \
 								%(p.pdgId(),p.pt(),p.eta(),p.phi(),mpdg) 
 
@@ -210,8 +304,8 @@ try:
 						if higgs_pt == 0: higgs_pt = mother.pt()
 						if higgs_eta == 0: higgs_eta = mother.eta()
 						if higgs_phi == 0: higgs_phi = mother.phi()
-						 
-						'''
+					'''
+				'''
 						# print HMM infos
 						if print_once_muons:
 								print "HMM process in this event:"
@@ -227,48 +321,6 @@ try:
 						print "Particle ID is: %d; Mother ID is: %d; Particle pt is: %f" % \
 								(p.pdgId(), p.mother(0).pdgId(), p.pt())
 					'''
-					'''
-					if p.status() ==1 and abs(p.eta())<5 and abs(p.pdgId()) == 13:
-						
-					if p.status() ==1 and abs(p.eta())<4.7 and abs(p.pdgId()) not in [12,14,16]:
-						tmp=ROOT.TLorentzVector()
-						tmp.SetPtEtaPhiM( p.pt(),p.eta(),p.phi(),0.105)
-						mu-=tmp
-
-					if p.status() ==1 and (abs(p.pdgId())==11 or abs(p.pdgId())==13 ) and abs(mpdg)==15:
-						lep=ROOT.TLorentzVector()
-						lep.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0 if abs(p.pdgId())==11 else 0.105)
-
-					if abs(p.pdgId()) == 15 and abs(mpdg)==37:
-						tau.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),1.7)
-
-					if abs(p.pdgId()) == 16 and abs(mpdg)==37:
-						nu.SetPtEtaPhiM(p.pt(),p.eta(),p.phi(),0.0)
-				'''
-				# check to make sure that we selected the muons from higgs decay
-				if muon_counter == 2:
-					dimuon_p = np.array(dimuon_p)
-					dimuon_inv_m = math.sqrt(np.add(dimuon_p[0][0], dimuon_p[1][0]) ** 2 - \
-							   np.linalg.norm(np.add(dimuon_p[0][1:], dimuon_p[1][1:])) ** 2)
-					# calculate pt of the dimuon as a whole system
-					dimuon_sys_pt = math.sqrt((dimuon_p[0][1] + dimuon_p[1][1]) ** 2 + 
-											  (dimuon_p[0][2] + dimuon_p[1][2]) ** 2)  
-					# store particle info from each evt to arries
-					data['dimuon_pt_1'].append(np.amax(np.array(dimuon_pt)))
-					data['dimuon_pt_2'].append(np.amin(np.array(dimuon_pt)))
-					data['dimuon_eta_1'].append(np.amax(np.array(dimuon_eta)))
-					data['dimuon_eta_2'].append(np.amin(np.array(dimuon_eta)))
-					data['dimuon_phi_1'].append(np.amax(np.array(dimuon_phi)))
-					data['dimuon_phi_2'].append(np.amin(np.array(dimuon_phi)))
-					#data['dimuon_p'].append(dimuon_p)
-					data['dimuon_sys_pt'].append(dimuon_sys_pt)
-					data['dimuon_inv_m'].append(dimuon_inv_m)
-					data['higgs_pt'].append(higgs_pt)
-					data['higgs_eta'].append(higgs_eta)
-					data['higgs_phi'].append(higgs_phi)
-				else:
-					print 'wrong config in HMM decay'
-
 
 				'''
 				event.getByLabel(labelJets, handleJets)
@@ -307,6 +359,7 @@ try:
 				'''
 		except TypeError:
 			# eos sucks
+			print "Unable to fetch file"
 			pass
 
 except KeyboardInterrupt:
@@ -315,51 +368,10 @@ except KeyboardInterrupt:
 # store data into csv files
 #for keys in data:
 #	print keys, len(data[keys])
+
 data = pd.DataFrame.from_dict(data)
-data.to_csv('data/' + sim_mode + '.csv', index = False)
-
-
-
-
-#nbin = 1.0/3.0
-#for key in data:
-#	data[key] = np.array(data[key])
-#	h[key] = 
-#	for evt_entry in data[key]:
-#		branch.Fill(evt_entry)
-#tree.Fill()
-
-
-''' more fitting for anothe script
-c = ROOT.TCanvas("c", "c", 1800, 1200)
-
-## fit the hist to a gaussian to get mass resolution
-h['dimuon_inv_m'].Fit("gaus")
-
-## get the fit function
-f = h['dimuon_inv_m'].GetFunction("gaus")
-ndf = f.GetNDF()
-chi2 = f.GetChisquare()
-
-## draw legend and add chi2/ndf
-#legend = ROOT.TLegend(0.6, 0.8, 0.99, 0.99)
-#legend.SetBorderSize(0)  # no border
-#legend.SetFillStyle(0)  # make transparent
-#legend.Draw()
-#legend.AddEntry(None, '#chi^{2}' + ' / ndf = {:.3f} / {}'.format(chi2, ndf), '')
-#legend.AddEntry(None, '= {:.3f}'.format(chi2/ndf), '')
-#legend.Draw()
-
-## draw the hist on canvas
-h['dimuon_inv_m'].Draw()
-c.SaveAs("inv_m.png")
-
-##file output
-fOut=ROOT.TFile("./data/" + sim_mode + ".root","RECREATE")
-fOut.cd()
-#for branch in tree:
-tree.Write()
-'''
+data.to_csv('data/m_mu_mu_' + sim_mode + '.csv', index = False)
+#print data['dimuon_inv_m']
 
 print "DONE"
 
