@@ -52,8 +52,8 @@ for key in data_fastsim.columns.get_values():
 	print type(np.amin(data_fastsim[key])), type(np.amin(data_fullsim[key]))
 	lb = (np.amin(data_fastsim[key]) + np.amin(data_fullsim[key])) / 2
 	ub = (np.amax(data_fastsim[key]) + np.amax(data_fullsim[key])) / 2
-	if key == 'm_mu_mu':
-		lb, ub = 110, 140
+	#if key == 'm_mu_mu':
+	#	lb, ub = 110, 140
 	print np.amax(data_fastsim[key]), np.amax(data_fullsim[key])
 	# declare hists and fill in data points
 	h_fast = ROOT.TH1D(key+"_fast", key+"_fast", nbins, lb, ub)
