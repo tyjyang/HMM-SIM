@@ -41,7 +41,8 @@ muon_mass = 0.105
 higgs_mass = 125
 ''' get a list of files under a certain directory '''
 num_files = 15
-sim_mode = "fullsim"
+sim_mode = "fastsim"
+cut = "min_inv_m_dR_l04"
 dir_fast = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
 dir_full = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FullSim_94X-MINIAODSIM"
 if sim_mode == "fullsim":
@@ -270,12 +271,14 @@ try:
 				if len(m_mu_mu_candidates):
 					m_mu_mu_candidates = np.array(m_mu_mu_candidates)
 					delta_R_reco_candidates = np.array(delta_R_reco_candidates)
-					i_dR_min = np.where(ddelta_R_candidates == np.amin(ddelta_R_candidates))[0]
+					#i_dR_min = np.where(ddelta_R_candidates == np.amin(ddelta_R_candidates))[0]
 					i_m_min = np.where(dm_mu_mu_candidates == np.amin(dm_mu_mu_candidates))[0]
-					if i_dR_min == i_m_min:
-						data['m_mu_mu'].append(float(m_mu_mu_candidates[i_min]))
-						data['delta_R'].append(float(delta_R_reco_candidates[i_min]))
-					else: 
+					#if i_dR_min == i_m_min:
+					data['m_mu_mu'].append(float(m_mu_mu_candidates[i_m_min]))
+					data['delta_R'].append(float(delta_R_reco_candidates[i_m_min]))
+					#else:
+					#	for x in delta_R_reco_candidates:
+					#		if abs(delta_R_reco_candidates[i_min]
 
 				else:
 					print 'No match between reco and gen muons based on delta_R'
@@ -379,7 +382,7 @@ except KeyboardInterrupt:
 #	print keys, len(data[keys])
 
 data = pd.DataFrame.from_dict(data)
-data.to_csv('data/m_mu_mu_' + sim_mode + '.csv', index = False)
+data.to_csv('data/m_mu_mu_' + sim_mode + '_' + cut + '.csv', index = False)
 #print data['dimuon_inv_m']
 
 print "DONE"

@@ -27,8 +27,8 @@ import re
 
 ROOT.gROOT.SetBatch(True) # disable graph display
 
-data_fastsim = pd.read_csv("data/m_mu_mu_fastsim.csv", skipinitialspace = True, dtype = float)
-data_fullsim = pd.read_csv("data/m_mu_mu_fullsim.csv", skipinitialspace=True, dtype = float)
+data_fastsim = pd.read_csv("data/m_mu_mu_fastsim_min_inv_m_dR_l04.csv", skipinitialspace = True, dtype = float)
+data_fullsim = pd.read_csv("data/m_mu_mu_fastsim_min_inv_m_dR_l04.csv", skipinitialspace=True, dtype = float)
 #data_fastsim['Hmm_met'] = data_fastsim["higgs_pt"] - data_fastsim["dimuon_sys_pt"]
 #data_fullsim['Hmm_met'] = data_fullsim["higgs_pt"] - data_fullsim["dimuon_sys_pt"]
 #data_fastsim['dimuon_delta_eta'] = abs(data_fastsim["dimuon_eta_1"] - data_fastsim["dimuon_eta_2"])
