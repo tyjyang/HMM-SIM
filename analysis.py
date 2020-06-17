@@ -53,15 +53,15 @@ for key in data_fastsim.columns.get_values():
 	lb = (np.amin(data_fastsim[key]) + np.amin(data_fullsim[key])) / 2
 	ub = (np.amax(data_fastsim[key]) + np.amax(data_fullsim[key])) / 2
 	if key == 'm_mu_mu':
-		lb = 70
+		lb, ub = 100, 140
 	print np.amax(data_fastsim[key]), np.amax(data_fullsim[key])
 	# declare hists and fill in data points
 	h_fast = ROOT.TH1D(key+"_fast", key+"_fast", nbins, lb, ub)
 	h_full = ROOT.TH1D(key+"_full", key+"_full", nbins, lb, ub)
 	for x in data_fastsim[key]:
-		if x >= lb: h_fast.Fill(x)
+		if x >= lb and x <= ub: h_fast.Fill(x)
 	for x in data_fullsim[key][:num_of_evts]:
-		if x >= lb: h_full.Fill(x)
+		if x >= lb and x <= ub: h_full.Fill(x)
 	'''set graph properties'''
 	h_fast.SetLineColor(ROOT.kBlue);
 	h_full.SetLineColor(ROOT.kRed);
