@@ -41,7 +41,7 @@ muon_mass = 0.105
 higgs_mass = 125
 ''' get a list of files under a certain directory '''
 num_files = 15
-sim_mode = "fastsim"
+sim_mode = "fullsim"
 cut = "min_dR_l02"
 dir_fast = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
 dir_full = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FullSim_94X-MINIAODSIM"
