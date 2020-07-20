@@ -7,6 +7,7 @@ import sys,os
 import math
 import numpy as np
 import pandas as pd
+from scipy import stats
 oldargv = sys.argv[:]
 #sys.argv = [ '-b-' ]
 import ROOT
@@ -26,8 +27,8 @@ from subprocess import check_output
 import re
 
 ROOT.gROOT.SetBatch(True) # disable graph display
-data_fastsim = pd.read_csv("data/m_mu_mu_fastsim_min_dR_l02.csv", skipinitialspace = True, dtype = float)
-data_fullsim = pd.read_csv("data/m_mu_mu_fullsim_min_dR_l02.csv", skipinitialspace=True, dtype = float)
+data_fastsim = pd.read_csv("data/m_mu_mu_fastsim_min_dR_l04.csv", skipinitialspace = True, dtype = float)
+data_fullsim = pd.read_csv("data/m_mu_mu_fullsim_min_dR_l04.csv", skipinitialspace=True, dtype = float)
 #data_fastsim = pd.read_csv("data/m_mu_mu_fastsim_min_inv_m_dR_l04.csv", skipinitialspace = True, dtype = float)
 #data_fullsim = pd.read_csv("data/m_mu_mu_fullsim_min_inv_m_dR_l04.csv", skipinitialspace=True, dtype = float)
 #data_fastsim['Hmm_met'] = data_fastsim["higgs_pt"] - data_fastsim["dimuon_sys_pt"]
@@ -39,36 +40,51 @@ data_fullsim = pd.read_csv("data/m_mu_mu_fullsim_min_dR_l02.csv", skipinitialspa
 #print data_fastsim.columns.get_values()
 
 #data_fullsim['dimuon_inv_m'] = data_fullsim.loc[data_fullsim['dimuon_inv_m'] < 125]
-num_of_evts = data_fastsim.shape[0]
-nbins = int(num_of_evts ** (1.0/3.0))
+num_evts_fast = data_fastsim.shape[0]
+num_evts_full = data_fullsim.shape[0]
+num_evts = min([num_evts_fast, num_evts_full])
 h = {}
-
 
 for key in data_fastsim.columns.get_values():
 	c = ROOT.TCanvas("canvas_" + key, "canvas_" + key)
 	data_fastsim[key] = np.array(data_fastsim[key])
 	data_fullsim[key] = np.array(data_fullsim[key])
 	# upper and lower bounds
-	print type(np.amin(data_fastsim[key])), type(np.amin(data_fullsim[key]))
 	lb = (np.amin(data_fastsim[key]) + np.amin(data_fullsim[key])) / 2
 	ub = (np.amax(data_fastsim[key]) + np.amax(data_fullsim[key])) / 2
-	#if key == 'm_mu_mu':
-	#	lb, ub = 110, 140
-	print np.amax(data_fastsim[key]), np.amax(data_fullsim[key])
+	if key == 'm_mu_mu':
+		lb, ub = 115, 135
+	#iqr = stats.iqr(data_fastsim[key])
+	#nbins = int(2 * (num_evts ** (1.0/3.0)))
+	nbins = int((ub - lb) * 2)
 	# declare hists and fill in data points
 	h_fast = ROOT.TH1D(key+"_fast", key+"_fast", nbins, lb, ub)
 	h_full = ROOT.TH1D(key+"_full", key+"_full", nbins, lb, ub)
-	for x in data_fastsim[key]:
+	for x in data_fastsim[key][:num_evts]:
 		if x >= lb and x <= ub: h_fast.Fill(x)
-	for x in data_fullsim[key][:num_of_evts]:
+	for x in data_fullsim[key][:num_evts]:
 		if x >= lb and x <= ub: h_full.Fill(x)
 	'''set graph properties'''
 	h_fast.SetLineColor(ROOT.kBlue);
 	h_full.SetLineColor(ROOT.kRed);
 	h_fast.SetMinimum(0)
 	h_full.SetMinimum(0)
+	h_full.SetFillColor(ROOT.kRed)
+	h_full.SetFillStyle(3004)
 	h_fast.Draw()
+	#scale = h_fast.Integral() / h_full.Integral()
+	#scale = 1
+	#h_full.Scale(scale)
+	# superpose 2 hists
 	h_full.Draw("SAMES")
+	ROOT.gPad.Update()
+	# draw 2nd axis on right
+	#rightmax = 1.1 * h_full.GetMaximum()
+	#axis = ROOT.TGaxis(ROOT.gPad.GetUxmax(), ROOT.gPad.GetUymin(),
+	#		           ROOT.gPad.GetUxmax(), ROOT.gPad.GetUymax(),0,rightmax,510,"+L")
+	#axis.SetLineColor(ROOT.kRed)
+	#axis.SetLabelColor(ROOT.kRed)
+	#axis.Draw()
 	ROOT.gPad.BuildLegend(0, 1, 0.2, 0.9)
 	ROOT.gPad.Update() # MANDOTARY for accessing stat boxes below
 	

@@ -41,8 +41,8 @@ muon_mass = 0.105
 higgs_mass = 125
 ''' get a list of files under a certain directory '''
 num_files = 15
-sim_mode = "fullsim"
-cut = "min_dR_l02"
+sim_mode = "fastsim"
+cut = "min_dR_l01"
 dir_fast = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FastSim_94X-MINIAODSIM"
 dir_full = "/store/user/amarini/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/FullSim_94X-MINIAODSIM"
 if sim_mode == "fullsim":
@@ -256,7 +256,7 @@ try:
 							p2 = to_Epxpypz(second_mu.mass(), second_mu.pt(), second_mu.eta(), second_mu.phi())
 							delta_R_reco = get_delta_R(mu.eta(), mu.phi(), second_mu.eta(), second_mu.phi())
 							ddelta_R = abs(delta_R_reco - delta_R_gen)
-							if ddelta_R < 0.2 and delta_R_gen:
+							if ddelta_R < 0.1 and delta_R_gen:
 								m_mu_mu = binary_inv_m(p1, p2)
 								m_mu_mu_candidates.append(m_mu_mu)
 								dm_mu_mu_candidates.append(abs(m_mu_mu - higgs_mass))
