@@ -1,0 +1,19 @@
+<FrameworkJobReport>
+<SkippedFile Pfn="file:step1_2.root" Lfn=""/>
+<FrameworkError ExitStatus="8020" Type="Fatal Exception" >
+<![CDATA[
+An exception of category 'FileOpenError' occurred while
+   [0] Constructing the EventProcessor
+   [1] Constructing input source of type PoolSource
+   [2] Calling RootFileSequenceBase::initTheFile()
+   [3] Calling StorageFactory::open()
+   [4] Calling File::sysopen()
+Exception Message:
+Failed to open the file 'step1_2.root'
+   Additional Info:
+      [a] Input file file:step1_2.root could not be opened.
+      [b] open() failed with system error 'No such file or directory' (error code 2)
+
+]]>
+</FrameworkError>
+</FrameworkJobReport>

@@ -1,0 +1,63 @@
+(b~ )g    ==>  H    b~      | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   1  4
+(c~ )g    ==>  H    c~      | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   1  4
+(s~ )g    ==>  H    s~      | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   1  4
+(u~ )g    ==>  H    u~      | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   1  4
+(d~ )g    ==>  H    d~      | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   1  4
+ g  (b~ ) ==>  H    b~      | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   2  4
+ g  (c~ ) ==>  H    c~      | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   2  4
+ g  (s~ ) ==>  H    s~      | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   2  4
+ g  (u~ ) ==>  H    u~      | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   2  4
+ g  (d~ ) ==>  H    d~      | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   2  4
+(g   g  ) ==>  H    g       | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   0  4
+ g  (d  ) ==>  H    d       | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   2  4
+ g  (u  ) ==>  H    u       | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   2  4
+ g  (s  ) ==>  H    s       | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   2  4
+ g  (c  ) ==>  H    c       | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   2  4
+ g  (b  ) ==>  H    b       | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   2  4
+(d  )g    ==>  H    d       | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   1  4
+(u  )g    ==>  H    u       | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   1  4
+(s  )g    ==>  H    s       | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   1  4
+(c  )g    ==>  H    c       | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   1  4
+(b  )g    ==>  H    b       | mult=  1
+ g   g    ==>  H       | uborn, mult=  1
+   1  4

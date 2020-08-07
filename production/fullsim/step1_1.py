@@ -82,8 +82,6 @@ process.PREMIXRAWoutput = cms.OutputModule("PoolOutputModule",
 
 # Other statements
 
-process.mix.digitizers = cms.PSet(process.theDigitizersMixPreMix)
-#process.mixData.input.fileNames = cms.untracked.vstring(['file:XXX.root'])
 import random
 from pu import puListFull
 random.shuffle(puListFull)

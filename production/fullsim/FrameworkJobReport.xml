@@ -1,0 +1,26 @@
+<FrameworkJobReport>
+<FrameworkError ExitStatus="7002" Type="Fatal Exception" >
+<![CDATA[
+An exception of category 'ConfigFileReadError' occurred while
+   [0] Processing the python configuration file named step3.py
+Exception Message:
+ unknown python problem occurred.
+KeyboardInterrupt: 
+
+At:
+  /cvmfs/cms.cern.ch/slc7_amd64_gcc700/external/py2-future/0.17.1-pafccj/lib/python2.7/site-packages/future/types/newrange.py(153): __init__
+  /cvmfs/cms.cern.ch/slc7_amd64_gcc700/external/py2-future/0.17.1-pafccj/lib/python2.7/site-packages/future/types/newrange.py(146): __iter__
+  /cvmfs/cms.cern.ch/slc7_amd64_gcc700/cms/cmssw/CMSSW_10_6_0/python/PhysicsTools/PatUtils/tools/runMETCorrectionsAndUncertainties.py(723): addIntermediateMETs
+  /cvmfs/cms.cern.ch/slc7_amd64_gcc700/cms/cmssw/CMSSW_10_6_0/python/PhysicsTools/PatUtils/tools/runMETCorrectionsAndUncertainties.py(693): getCorrectedMET
+  /cvmfs/cms.cern.ch/slc7_amd64_gcc700/cms/cmssw/CMSSW_10_6_0/python/PhysicsTools/PatUtils/tools/runMETCorrectionsAndUncertainties.py(391): toolCode
+  /cvmfs/cms.cern.ch/slc7_amd64_gcc700/cms/cmssw/CMSSW_10_6_0/python/FWCore/GuiBrowsers/ConfigToolBase.py(71): apply
+  /cvmfs/cms.cern.ch/slc7_amd64_gcc700/cms/cmssw/CMSSW_10_6_0/python/PhysicsTools/PatUtils/tools/runMETCorrectionsAndUncertainties.py(281): __call__
+  /cvmfs/cms.cern.ch/slc7_amd64_gcc700/cms/cmssw/CMSSW_10_6_0/python/PhysicsTools/PatUtils/tools/runMETCorrectionsAndUncertainties.py(1922): runMetCorAndUncForMiniAODProduction
+  /cvmfs/cms.cern.ch/slc7_amd64_gcc700/cms/cmssw/CMSSW_10_6_0/python/PhysicsTools/PatAlgos/slimming/miniAOD_tools.py(438): miniAOD_customizeCommon
+  /cvmfs/cms.cern.ch/slc7_amd64_gcc700/cms/cmssw/CMSSW_10_6_0/python/PhysicsTools/PatAlgos/slimming/miniAOD_tools.py(544): miniAOD_customizeAllMC
+  step3.py(181): <module>
+
+
+]]>
+</FrameworkError>
+</FrameworkJobReport>
